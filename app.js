@@ -6,6 +6,7 @@ const fetch = require('node-fetch')
 const axios = require('axios')
 const dotenv = require('dotenv')
 const path = require('path')
+const { title } = require('process')
 const app = express()
 
 dotenv.config({path:__dirname + '/.env'})
@@ -928,6 +929,14 @@ app.get('/filter', async function(req, res) {
 
 app.get('/ozon', async function(req, res){
 
+    const nat_cat = []
+    const nat_catGtins = []
+    const nat_catNames = []
+    let oz_orders = []
+    const new_items = []
+    const current_items = []
+    const names = []
+
     let html = `${headerComponent}
                     <title>Импорт - OZON</title>
                 </head>
@@ -935,11 +944,6 @@ app.get('/ozon', async function(req, res){
                         ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
 
     async function renderImportButtons(array) {
 
@@ -971,28 +975,380 @@ app.get('/ozon', async function(req, res){
 
     html += `</section>`
 
-    const nat_cat = []
-    const new_orders = []
-    const new_items = []
-    const current_items = []
-    const moderation_items = []
-    const vendorCodes = []
+    const wb = new exl.Workbook()
 
-    const colors = ['БЕЖЕВЫЙ', 'БЕЛЫЙ', 'БИРЮЗОВЫЙ', 'БОРДОВЫЙ', 'БРОНЗОВЫЙ', 'ВАНИЛЬ', 'ВИШНЯ', 'ГОЛУБОЙ', 'ЖЁЛТЫЙ', 'ЗЕЛЁНЫЙ', 'ЗОЛОТОЙ', 'ИЗУМРУДНЫЙ',
-    'КАПУЧИНО', 'КИРПИЧНЫЙ', 'КОРАЛЛОВЫЙ', 'КОРИЧНЕВЫЙ', 'КРАСНЫЙ', 'ЛАЙМ', 'ЛЕОПАРД', 'МАЛИНОВЫЙ', 'МЕДНЫЙ', 'МОЛОЧНЫЙ', 'МЯТНЫЙ', 'ОЛИВКОВЫЙ', 'ОРАНЖЕВЫЙ',
-    'ПЕСОЧНЫЙ', 'ПЕРСИКОВЫЙ', 'ПУРПУРНЫЙ', 'РАЗНОЦВЕТНЫЙ', 'РОЗОВО-БЕЖЕВЫЙ', 'РОЗОВЫЙ', 'СВЕТЛО-БЕЖЕВЫЙ', 'СВЕТЛО-ЗЕЛЕНЫЙ', 'СВЕТЛО-КОРИЧНЕВЫЙ', 'СВЕТЛО-РОЗОВЫЙ',
-    'СВЕТЛО-СЕРЫЙ', 'СВЕТЛО-СИНИЙ', 'СВЕТЛО-ФИОЛЕТОВЫЙ', 'СЕРЕБРЯНЫЙ', 'СЕРО-ЖЕЛТЫЙ', 'СЕРО-ГОЛУБОЙ', 'СЕРЫЙ', 'СИНИЙ', 'СИРЕНЕВЫЙ', 'ЛИЛОВЫЙ', 'СЛИВОВЫЙ',
-    'ТЕМНО-БЕЖЕВЫЙ', 'ТЕМНО-ЗЕЛЕНЫЙ', 'ТЕМНО-КОРИЧНЕВЫЙ', 'ТЕМНО-РОЗОВЫЙ', 'ТЕМНО-СЕРЫЙ', 'ТЕМНО-СИНИЙ', 'ТЕМНО-ФИОЛЕТОВЫЙ', 'ТЕРРАКОТОВЫЙ', 'ФИОЛЕТОВЫЙ',
-    'ФУКСИЯ', 'ХАКИ', 'ЧЕРНЫЙ', 'ШОКОЛАДНЫЙ'
-    ]
-    
-    const filePath = './public/moderation_marks/moderation_marks.html'
+    await wb.xlsx.readFile('./public/Краткий отчет.xlsx')
 
-    // const fileContent = fs.readFileSync(filePath, 'utf-8')
+    const nc_ws = wb.getWorksheet('Краткий отчет')
 
-    // const content = cio.load(fileContent)
+    const nc_c1 = nc_ws.getColumn(1)
 
-    async function createImport(new_products) {
+    nc_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
+
+        if(rowNumber < 5) return
+        nat_catGtins.push(c.value)
+
+    })
+
+    const nc_c2 = nc_ws.getColumn(2)
+
+    nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
+
+        if(rowNumber < 5) return
+        nat_catNames.push(c.value.trim())
+
+    })
+
+    for(let i = 0; i < nat_catNames.length; i++) {
+
+        nat_cat.push({
+            'gtin': nat_catGtins[i],
+            'name': nat_catNames[i]
+        })
+
+    }
+
+    let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+        
+        'dir': 'asc',
+        'filter': {
+            'since':'2025-01-01T01:00:00.000Z',
+            'status':'awaiting_packaging',
+            'to':'2025-12-31T23:59:59.000Z'
+        },
+        'limit': 1000,
+        'offset':0
+
+    }, {
+
+        headers: {
+            'Host':'api-seller.ozon.ru',
+            'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+            'Api-Key':`${process.env.OZON_API_KEY}`,
+            'Content-Type':'application/json'
+        }
+
+    })
+
+    const result = response.data.result.postings
+
+    result.forEach(el => {
+
+        for(let i = 0; i < el.products.length; i++) {
+
+            // console.log(el.products[i].offer_id)
+            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) >= 0) {
+
+                oz_orders.find(o => o.vendor === el.products[i].offer_id).quantity += Number(el.products[i].quantity)
+
+            }
+
+            // console.log(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id))
+
+            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
+
+                oz_orders.push({
+                    'name': el.products[i].name,
+                    'vendor': el.products[i].offer_id,
+                    'quantity': Number(el.products[i].quantity)
+                })
+
+            }
+
+        }
+    })
+
+    oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
+
+    for(let i = 0; i < oz_orders.length; i++) {
+
+        const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+                    
+            "filter": {
+                "offer_id": [
+                    oz_orders[i].vendor
+                ],
+                "visibility": "ALL"
+            },
+            "limit": 1000,
+            "sort_dir": "ASC"
+
+        }, {
+            headers: {
+                'Host':'api-seller.ozon.ru',
+                'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                'Api-Key':`${process.env.OZON_API_KEY}`,
+                'Content-Type':'application/json'
+            }
+        })
+
+        if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
+
+            names.push({            
+                'vendor': oz_orders[i].vendor,
+                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                .trim()                  // убрать пробелы по краям
+                                                .replace(/\s+/g, ' '),
+                'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
+                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+            })   
+
+        }
+
+        if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+
+            if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                names.push({            
+                    'vendor': oz_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+                })
+
+            }
+
+            if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                names.push({            
+                    'vendor': oz_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'ПРОСТЫНЯ'
+                })
+
+            }
+
+        }
+
+        if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+
+            if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
+
+                names.push({
+                    'vendor': oz_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                })
+
+            } else {
+
+                names.push({
+                    'vendor': oz_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                })
+
+            }
+
+        }
+
+        if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
+
+            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+
+                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                        names.push({
+                            'vendor': oz_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                        names.push({
+                            'vendor': oz_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                        names.push({
+                            'vendor': oz_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                }
+
+                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                    names.push({
+                        'vendor': oz_orders[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ'
+                    })
+
+                }
+
+            }
+
+            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+
+                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                        names.push({
+                            'vendor': oz_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                        names.push({
+                            'vendor': oz_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                        names.push({
+                            'vendor': oz_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                }
+
+                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                    names.push({
+                        'vendor': oz_orders[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ'
+                    })
+
+                }
+
+            }
+            
+
+        }
+
+    }
+
+    names.forEach(el => {
+
+            if(nat_cat.findIndex(o => o.name === el.name) < 0) {
+                new_items.push(el.name)
+            }
+
+            if(nat_cat.findIndex(o => o.name === el.name) >= 0) {
+                current_items.push(el.name)
+            }
+
+    })
+
+    html += `<section class="table">
+                <div class="marks-table">
+                    <div class="marks-table-header">
+                        <div class="header-cell">Наименование</div>
+                        <div class="header-cell">Статус</div>                            
+                    </div>
+                <div class="header-wrapper"></div>`
+
+    names.forEach(elem => {
+        if(new_items.indexOf(elem.name) >= 0) {
+            html += `<div class="table-row">
+                        <span id="name">${elem.name}</span>
+                        <span id="status-new">Новый товар</span>
+                     </div>`
+        } else {
+            html += `<div class="table-row">
+                        <span id="name">${elem.name}</span>
+                        <span id="status-current">Актуальный товар</span>
+                     </div>`
+        }
+    })
+
+    html += `</section>
+             <section class="action-form">
+                <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
+             </section>
+             <div class="body-wrapper"></div>                        
+             ${footerComponent}`
+
+    async function createImport(array) {
+
         const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
         
         const wb = new exl.Workbook()
@@ -1003,242 +1359,35 @@ app.get('/ozon', async function(req, res){
 
         let cellNumber = 5
 
-        for(i = 0; i < new_products.length; i++) {
-            let size = ''            
-                ws.getCell(`A${cellNumber}`).value = '6302'
-                ws.getCell(`B${cellNumber}`).value = new_products[i]
-                ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-                ws.getCell(`D${cellNumber}`).value = 'Артикул'
-                ws.getCell(`E${cellNumber}`).value = vendorCodes[new_orders.indexOf(new_products[i])]
-                for(let c = 0; c < colors.length; c++) {
-                    str = colors[c].toLowerCase()
-                    elem = new_products[i].toLowerCase()
-                    if(elem.indexOf(str) >= 0) {
-                        ws.getCell(`G${cellNumber}`).value = colors[c].toUpperCase()
-                    }
-                }
-                ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
+        for(let i = 0; i < array.length; i++) {
 
-                if(new_products[i].indexOf('Постельное') >= 0 || new_products[i].indexOf('Детское') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'КОМПЛЕКТ'
-                }
+            ws.getCell(`A${cellNumber}`).value = 6302
+            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
+            ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
+            ws.getCell(`D${cellNumber}`).value = 'Артикул'
+            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
+            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
+            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
+            ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
 
-                if(new_products[i].indexOf('Полотенце') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'ИЗДЕЛИЯ ДЛЯ САУНЫ'
-                }
-                
-                if(new_products[i].indexOf('Простыня') >= 0) {
-                    if(new_products[i].indexOf('на резинке') >= 0) {
-                        ws.getCell(`F${cellNumber}`).value = 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-                    } else {
-                        ws.getCell(`F${cellNumber}`).value = 'ПРОСТЫНЯ'
-                    }
-                }
-                if(new_products[i].indexOf('Пододеяльник') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-                }
-                if(new_products[i].indexOf('Наволочка') >= 0) {
-                    if(new_products[i].indexOf('50х70') >=0 || new_products[i].indexOf('40х60') >= 0 || new_products[i].indexOf('50 х 70') >=0 || new_products[i].indexOf('40 х 60') >= 0) {
-                        ws.getCell(`F${cellNumber}`).value = 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-                    } else {
-                        ws.getCell(`F${cellNumber}`).value = 'НАВОЛОЧКА КВАДРАТНАЯ'
-                    }
-                }
-                if(new_products[i].indexOf('Наматрасник') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'НАМАТРАСНИК'
-                }
-                if(new_products[i].indexOf('страйп-сатин') >= 0 || new_products[i].indexOf('страйп сатин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-                }
-                if(new_products[i].indexOf('твил-сатин') >= 0 || new_products[i].indexOf('твил сатин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ТВИЛ-САТИН'
-                }
-                if(new_products[i].indexOf('тенсел') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ТЕНСЕЛЬ'
-                }
-                if(new_products[i].indexOf('бяз') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'БЯЗЬ'
-                }
-                if(new_products[i].indexOf('поплин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ПОПЛИН'
-                }
-                if(new_products[i].indexOf('сатин') >= 0 && new_products[i].indexOf('-сатин') < 0 && new_products[i].indexOf('п сатин') < 0 && new_products[i].indexOf('л сатин') < 0 && new_products[i].indexOf('сатин-') < 0 && new_products[i].indexOf('сатин ж') < 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'САТИН'
-                }
-                if(new_products[i].indexOf('вареный') >= 0 || new_products[i].indexOf('варёный') >= 0 || new_products[i].indexOf('вареного') >= 0 || new_products[i].indexOf('варёного') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-                }
-                if(new_products[i].indexOf('сатин-жаккард') >= 0 || new_products[i].indexOf('сатин жаккард') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'САТИН-ЖАККАРД'
-                }
-                if(new_products[i].indexOf('страйп-микрофибр') >= 0 || new_products[i].indexOf('страйп микрофибр') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'МИКРОФИБРА'
-                }
-                if(new_products[i].indexOf('шерст') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ПОЛИЭФИР'
-                }
-                if(new_products[i].indexOf('перкал') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ПЕРКАЛЬ'
-                }
-                if(new_products[i].indexOf('махра') >= 0 || new_products[i].indexOf('махровое') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'МАХРОВАЯ ТКАНЬ'
-                }
+            if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+            if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
+            if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
+            if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+            
+            if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-                if(new_products[i].indexOf('тенсел') >= 0) {ws.getCell(`J${cellNumber}`).value = '100% Эвкалипт'}
-                else if(new_products[i].indexOf('шерст') >= 0) {ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'}
-                else {ws.getCell(`J${cellNumber}`).value = '100% Хлопок'}
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
+            if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
-                //Вставка размера начало
-                
-                if(new_products[i].indexOf('Постельное') >= 0) {
-                    if(new_products[i].indexOf('1,5 спальное') >= 0 || new_products[i].indexOf('1,5 спальный') >= 0) {
-                        size = '1,5 спальное'
-                        if(new_products[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(new_products[i].indexOf('2 спальное') >= 0 || new_products[i].indexOf('2 спальный') >= 0) {
-                        size = '2 спальное'
-                        if(new_products[i].indexOf('с Евро') >= 0) {
-                            size += ' с Евро простыней'
-                        }
-                        if(new_products[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(new_products[i].indexOf('Евро -') >= 0 || new_products[i].indexOf('евро -') >= 0 || new_products[i].indexOf('Евро на') >= 0 || new_products[i].indexOf('евро на') >= 0) {
-                        size = 'Евро'
-                        if(new_products[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(new_products[i].indexOf('Евро Макси') >= 0 || new_products[i].indexOf('евро макси') >= 0 || new_products[i].indexOf('Евро макси') >= 0) {
-                        size = 'Евро Макси'
-                        if(new_products[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(new_products[i].indexOf('семейное') >= 0 || new_products[i].indexOf('семейный') >= 0) {
-                        size = 'семейное'
-                        if(new_products[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                } else {
-                    for(let k = 40; k < 305; k+=5) {
-                        for(let l = 40; l < 305; l+=5) {
-                            if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                size = `${k.toString()}х${l.toString()}`
-                                for(let j = 10; j < 50; j+=10) {
-                                    if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                        size = `${k.toString()}х${l.toString()}х${j.toString()}`
-                                        ws.getCell(`K${cellNumber}`).value = size
-                                    } else {
-                                        ws.getCell(`K${cellNumber}`).value = size
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                //Вставка размера конец
+            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
+            ws.getCell(`L${cellNumber}`).value = '6302100001'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
-                ws.getCell(`L${cellNumber}`).value = '6302100001'
-                ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-                ws.getCell(`N${cellNumber}`).value = 'На модерации'                
-
-                cellNumber++
+            cellNumber++
 
         }
 
@@ -1260,9 +1409,7 @@ app.get('/ozon', async function(req, res){
         ws.getCell('E2').alignment = {
             horizontal: 'center',
             vertical: 'bottom'
-        }
-
-        // ws.mergeCells('D2:E2')
+        }        
 
         const date_ob = new Date()
 
@@ -1270,7 +1417,7 @@ app.get('/ozon', async function(req, res){
 
         let filePath = ''
 
-        month < 10 ? filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_${month}_ozon`
+        month < 10 ? filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon`
 
         fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
             if(err) {
@@ -1290,173 +1437,9 @@ app.get('/ozon', async function(req, res){
 
     }
 
-    async function getOrdersList() {
+    if(new_items.length > 0) await createImport(new_items)
 
-        let response = await fetch('https://api-seller.ozon.ru/v3/posting/fbs/list', {
-
-            method: 'POST',
-            headers: {
-                'Host':'api-seller.ozon.ru',
-                'Client-Id':'144225',
-                'Api-Key':'c139ba7b-611a-4447-870c-f85d8e4ad9f8',
-                'Content-Type':'application/json'
-            },
-            body: JSON.stringify({
-                'dir': 'asc',
-                'filter': {
-                    'since':'2025-01-01T01:00:00.000Z',
-                    'status':'awaiting_packaging',
-                    'to':'2025-12-31T23:59:59.000Z'
-                },
-                'limit': 1000,
-                'offset':0
-            })
-
-        })
-        
-        let result = await response.json()
-
-        result.result.postings.forEach(e => {
-            e.products.forEach(el => {
-                if(new_orders.indexOf(el.name) < 0) {
-                    if(el.name.indexOf('Пеленка') >= 0 || el.name.indexOf('Набор махровых полотенец') >= 0 || el.name.indexOf('Гобелен') >= 0 || el.name.indexOf('Полотенце') >= 0 || el.name.indexOf('полотенце') >= 0 || el.name.indexOf('Постельное') >= 0 || el.name.indexOf('постельное') >= 0 || el.name.indexOf('Простыня') >= 0 || el.name.indexOf('Пододеяльник') >= 0 || el.name.indexOf('Наволочка') >= 0 || el.name.indexOf('Наматрасник') >= 0) {
-                        new_orders.push(el.name)
-                        vendorCodes.push(el.offer_id)
-                    }
-                } else {
-                    console.log(el.name)
-                }
-            })
-        })
-        
-    }
-        // if(count === 1) {
-        //     const divs = content('.details-cell_propsSecond_f-KWL')            
-        //     divs.each((i, elem) => {
-        //         // console.log(content(elem).text())
-        //         let str = (content(elem).text()).trim()
-        //         if(str.indexOf('Гобелен') >= 0 || str.indexOf('Полотенце') >= 0 || str.indexOf('полотенце') >= 0 || str.indexOf('Постельное') >= 0 || str.indexOf('постельное') >= 0 || str.indexOf('Простыня') >= 0 || str.indexOf('Пододеяльник') >= 0 || str.indexOf('Наволочка') >= 0 || str.indexOf('Наматрасник') >= 0) new_orders.push(str)
-        //     })
-        // } else {
-        //     for(i; i <= count; i++) {
-        //         const divs = content('.details-cell_propsSecond_f-KWL')
-        //         divs.each((i, elem) => {
-        //             // console.log(content(elem).text())
-        //             let str = (content(elem).text()).trim()
-        //             if(str.indexOf('Постельное') >= 0 || str.indexOf('постельное') >= 0 || str.indexOf('Простыня') >= 0 || str.indexOf('Пододеяльник') >= 0 || str.indexOf('Наволочка') >= 0 || str.indexOf('Наматрасник') >= 0) new_orders.push(str)
-        //         })  
-        //     }
-        // }
-
-    await getOrdersList()
-
-    const wb = new exl.Workbook()
-    
-    const fileName = './public/Краткий отчет.xlsx'    
-
-    wb.xlsx.readFile(fileName).then(() => {
-        
-        const ws = wb.getWorksheet('Краткий отчет')
-
-        const c2 = ws.getColumn(2)
-
-        c2.eachCell(c => {
-           nat_cat.push(c.value)
-        })
-
-        console.log(nat_cat.length)
-
-        const products = []
-        const moderation_products = []
-
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-
-        const content = cio.load(fileContent)
-
-        const spans = content('span')
-
-        const divs = content('.exYASM')
-
-        spans.each((i, elem) => {
-            if(((content(elem).text()).indexOf('Гобеленовая') >= 0 || (content(elem).text()).indexOf('Полотенце') >= 0 || (content(elem).text()).indexOf('Постельное') >= 0 || (content(elem).text()).indexOf('Наволочка') >= 0 || (content(elem).text()).indexOf('Простыня') >= 0 || (content(elem).text()).indexOf('Пододеяльник') >= 0 || (content(elem).text()).indexOf('Наматрасник') >= 0 || (content(elem).text()).indexOf('Одеяло') >= 0 || (content(elem).text()).indexOf('Матрас') >= 0) && moderation_products.indexOf(content(elem).text()) < 0){
-                products.push(content(elem).text())
-            }
-        })
-
-        for(let i = 0; i < products.length; i++) {
-            if(i%2 !== 0) {
-                moderation_products.push(products[i])
-            }
-        }
-
-        for(i = 0; i < new_orders.length; i++) {
-            if(moderation_products.indexOf(new_orders[i].trim()) < 0 && nat_cat.indexOf(new_orders[i].trim()) < 0 && new_items.indexOf(new_orders[i].trim()) < 0){
-
-                new_items.push(new_orders[i].trim())
-
-            }
-
-            if(nat_cat.indexOf(new_orders[i].trim()) >=0 && current_items.indexOf(new_orders[i].trim()) < 0) {
-
-                current_items.push(new_orders[i].trim())
-
-            }
-
-            if(moderation_products.indexOf(new_orders[i].trim()) >=0 && current_items.indexOf(new_orders[i].trim()) < 0) {
-
-                moderation_items.push(new_orders[i].trim())
-
-            }
-
-        }
-
-        // console.log(moderation_products)
-
-        html += `<section class="table">
-                    <div class="marks-table">
-                        <div class="marks-table-header">
-                            <div class="header-cell">Наименование</div>
-                            <div class="header-cell">Статус</div>                            
-                        </div>
-                    <div class="header-wrapper"></div>`
-
-        new_items.forEach(elem => {
-            html += `<div class="table-row">
-                        <span id="name">${elem}</span>
-                        <span id="status-new">Новый товар</span>
-                     </div>`
-        })
-
-        current_items.forEach(elem => {
-            html += `<div class="table-row">
-                        <span id="name">${elem}</span>
-                        <span id="status-current">Актуальный товар</span>
-                     </div>`
-        })
-
-        moderation_items.forEach(elem => {
-            html += `<div class="table-row">
-                        <span id="name">${elem}</span>
-                        <span id="status-moderation">Модерируемый товар</span>
-                     </div>`
-        })
-
-        html += `       </section>
-                        <section class="action-form">
-                            <button id="current-order"><a href="http://localhost:3030/ozon_marks_order" target="_blank">Создать заказ маркировки для актуальных товаров</a></button>
-                            <button id="new-order"><a href="http://localhost:3030/ozon_new_marks_order" target="_blank">Создать заказ маркировки для новых товаров</a></button>
-                        </section>
-                        <div class="body-wrapper"></div>                        
-                        ${footerComponent}`
-
-        // html = '<h1 class="success">Import successfully done</h1>'
-        res.send(html)
-
-        if(new_items.length > 0) createImport(new_items)        
-
-        }).catch(err => {
-        console.log(err.message)
-    })    
+    res.send(html)
 
 })
 
@@ -1773,14 +1756,6 @@ app.get('/wildberries', async function(req, res){
 
     html += `</section>`
 
-    const colors = ['БЕЖЕВЫЙ', 'БЕЛЫЙ', 'БИРЮЗОВЫЙ', 'БОРДОВЫЙ', 'БРОНЗОВЫЙ', 'ВАНИЛЬ', 'ВИШНЯ', 'ГОЛУБОЙ', 'ЖЁЛТЫЙ', 'ЗЕЛЁНЫЙ', 'ЗОЛОТОЙ', 'ИЗУМРУДНЫЙ',
-                        'КАПУЧИНО', 'КИРПИЧНЫЙ', 'КОРАЛЛОВЫЙ', 'КОРИЧНЕВЫЙ', 'КРАСНЫЙ', 'ЛАЙМ', 'ЛЕОПАРД', 'МАЛИНОВЫЙ', 'МЕДНЫЙ', 'МОЛОЧНЫЙ', 'МЯТНЫЙ', 'ОЛИВКОВЫЙ', 'ОРАНЖЕВЫЙ',
-                        'ПЕСОЧНЫЙ', 'ПЕРСИКОВЫЙ', 'ПУРПУРНЫЙ', 'РАЗНОЦВЕТНЫЙ', 'РОЗОВО-БЕЖЕВЫЙ', 'РОЗОВЫЙ', 'СВЕТЛО-БЕЖЕВЫЙ', 'СВЕТЛО-ЗЕЛЕНЫЙ', 'СВЕТЛО-КОРИЧНЕВЫЙ', 'СВЕТЛО-РОЗОВЫЙ',
-                        'СВЕТЛО-СЕРЫЙ', 'СВЕТЛО-СИНИЙ', 'СВЕТЛО-ФИОЛЕТОВЫЙ', 'СЕРЕБРЯНЫЙ', 'СЕРО-ЖЕЛТЫЙ', 'СЕРО-ГОЛУБОЙ', 'СЕРЫЙ', 'СИНИЙ', 'СИРЕНЕВЫЙ', 'ЛИЛОВЫЙ', 'СЛИВОВЫЙ',
-                        'ТЕМНО-БЕЖЕВЫЙ', 'ТЕМНО-ЗЕЛЕНЫЙ', 'ТЕМНО-КОРИЧНЕВЫЙ', 'ТЕМНО-РОЗОВЫЙ', 'ТЕМНО-СЕРЫЙ', 'ТЕМНО-СИНИЙ', 'ТЕМНО-ФИОЛЕТОВЫЙ', 'ТЕРРАКОТОВЫЙ', 'ФИОЛЕТОВЫЙ',
-                        'ФУКСИЯ', 'ХАКИ', 'ЧЕРНЫЙ', 'ШОКОЛАДНЫЙ'
-    ]
-
     const wb = new exl.Workbook()
 
     const hsFile = './public/Краткий отчет.xlsx'
@@ -1839,20 +1814,235 @@ app.get('/wildberries', async function(req, res){
         }, {
             headers: {
                 'Host':'api-seller.ozon.ru',
-                'Client-Id':'144225',
-                'Api-Key':'c139ba7b-611a-4447-870c-f85d8e4ad9f8',
+                'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                'Api-Key':`${process.env.OZON_API_KEY}`,
                 'Content-Type':'application/json'
             }
         })
 
-        names.push({
-            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                               .trim()                  // убрать пробелы по краям
-                                               .replace(/\s+/g, ' '),
-            'vendor': wb_orders[i].vendor
-        })
+        if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
-        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка'))
+            names.push({            
+                'vendor': wb_orders[i].vendor,
+                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                .trim()                  // убрать пробелы по краям
+                                                .replace(/\s+/g, ' '),
+                'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
+                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+            })   
+
+        }
+
+        if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+
+            if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                names.push({            
+                    'vendor': wb_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+                })
+
+            }
+
+            if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                names.push({            
+                    'vendor': wb_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'ПРОСТЫНЯ'
+                })
+
+            }
+
+        }
+
+        if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+
+            if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
+
+                names.push({
+                    'vendor': wb_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                })
+
+            } else {
+
+                names.push({
+                    'vendor': wb_orders[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' '),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                })
+
+            }
+
+        }
+
+        if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
+
+            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+
+                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                }
+
+                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                    names.push({
+                        'vendor': wb_orders[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ'
+                    })
+
+                }
+
+            }
+
+            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+
+                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' '),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                }
+
+                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                    names.push({
+                        'vendor': wb_orders[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ'
+                    })
+
+                }
+
+            }
+            
+
+        }
+
+        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0)
 
     }
 
@@ -1897,8 +2087,7 @@ app.get('/wildberries', async function(req, res){
 
     html += `</section>
              <section class="action-form">
-                <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказ маркировки для актуальных товаров</a></button>
-                <button id="new-order"><a href="http://localhost:3030/wildberries_new_marks_order" target="_blank">Создать заказ маркировки для новых товаров</a></button>
+                <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
              </section>
              <div class="body-wrapper"></div>                        
              ${footerComponent}`
@@ -1915,236 +2104,35 @@ app.get('/wildberries', async function(req, res){
 
         let cellNumber = 5
 
-        for(i = 0; i < array.length; i++) {
-            let size = ''            
-                ws.getCell(`A${cellNumber}`).value = '6302'
-                ws.getCell(`B${cellNumber}`).value = array[i]
-                ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-                ws.getCell(`D${cellNumber}`).value = 'Артикул'
-                let index = names.indexOf(array[i])
-                ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
-                for(let c = 0; c < colors.length; c++) {
-                    str = colors[c].toLowerCase()
-                    elem = array[i].toLowerCase()
-                    if(elem.indexOf(str) >= 0) {
-                        ws.getCell(`G${cellNumber}`).value = colors[c].toUpperCase()
-                    }
-                }
-                ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
+        for(let i = 0; i < array.length; i++) {
 
-                if(array[i].indexOf('Постельное') >= 0 || array[i].indexOf('Детское') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'КОМПЛЕКТ'
-                }
-                
-                if(array[i].indexOf('Простыня') >= 0) {
-                    if(array[i].indexOf('на резинке') >= 0) {
-                        ws.getCell(`F${cellNumber}`).value = 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-                    } else {
-                        ws.getCell(`F${cellNumber}`).value = 'ПРОСТЫНЯ'
-                    }
-                }
-                if(array[i].indexOf('Пододеяльник') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-                }
-                if(array[i].indexOf('Наволочка') >= 0) {
-                    if(array[i].indexOf('50х70') >=0 || array[i].indexOf('40х60') >= 0 || array[i].indexOf('50 х 70') >=0 || array[i].indexOf('40 х 60') >= 0) {
-                        ws.getCell(`F${cellNumber}`).value = 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-                    } else {
-                        ws.getCell(`F${cellNumber}`).value = 'НАВОЛОЧКА КВАДРАТНАЯ'
-                    }
-                }
-                if(array[i].indexOf('Наматрасник') >= 0) {
-                    ws.getCell(`F${cellNumber}`).value = 'НАМАТРАСНИК'
-                }
-                if(array[i].indexOf('страйп-сатин') >= 0 || array[i].indexOf('страйп сатин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-                }
-                if(array[i].indexOf('твил-сатин') >= 0 || array[i].indexOf('твил сатин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ТВИЛ-САТИН'
-                }
-                if(array[i].indexOf('полисатин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ПОЛИСАТИН'
-                }
-                if(array[i].indexOf('тенсел') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ТЕНСЕЛЬ'
-                }
-                if(array[i].indexOf('бяз') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'БЯЗЬ'
-                }
-                if(array[i].indexOf('поплин') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ПОПЛИН'
-                }
-                if(array[i].indexOf('сатин') >= 0 && array[i].indexOf('-сатин') < 0 && array[i].indexOf('п сатин') < 0 && array[i].indexOf('л сатин') < 0 && array[i].indexOf('сатин-') < 0 && array[i].indexOf('сатин ж') < 0 && array[i].indexOf('полисатин') < 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'САТИН'
-                }
-                if(array[i].indexOf('вареный') >= 0 || array[i].indexOf('варёный') >= 0 || array[i].indexOf('вареного') >= 0 || array[i].indexOf('варёного') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-                }
-                if(array[i].indexOf('сатин-жаккард') >= 0 || array[i].indexOf('сатин жаккард') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'САТИН-ЖАККАРД'
-                }
-                if(array[i].indexOf('страйп-микрофибр') >= 0 || array[i].indexOf('страйп микрофибр') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'МИКРОФИБРА'
-                }
-                if(array[i].indexOf('шерст') >= 0) {
-                    ws.getCell(`I${cellNumber}`).value = 'ПОЛИЭФИР'
-                }
+            ws.getCell(`A${cellNumber}`).value = 6302
+            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
+            ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
+            ws.getCell(`D${cellNumber}`).value = 'Артикул'
+            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
+            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
+            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
+            ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
 
-                if(array[i].indexOf('тенсел') >= 0) {ws.getCell(`J${cellNumber}`).value = '100% Эвкалипт'}
-                else if(array[i].indexOf('шерст') >= 0) {ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'}
-                else {ws.getCell(`J${cellNumber}`).value = '100% Хлопок'}
+            if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+            if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
+            if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
+            if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+            
+            if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-                //Вставка размера начало
-                
-                if(array[i].indexOf('Постельное') >= 0) {
-                    if(array[i].indexOf('1,5 спальное') >= 0 || array[i].indexOf('1,5 спальный') >= 0) {
-                        size = '1,5 спальное'
-                        if(array[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(array[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(array[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(array[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(array[i].indexOf('2 спальное') >= 0 || array[i].indexOf('2 спальный') >= 0) {
-                        size = '2 спальное'
-                        if(array[i].indexOf('с Евро') >= 0) {
-                            size += ' с Евро простыней'
-                        }
-                        if(array[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(array[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(array[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(array[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(array[i].indexOf('Евро -') >= 0 || array[i].indexOf('евро -') >= 0 || array[i].indexOf('Евро на') >= 0 || array[i].indexOf('евро на') >= 0) {
-                        size = 'Евро'
-                        if(array[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(array[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(array[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(array[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(array[i].indexOf('Евро Макси') >= 0 || array[i].indexOf('евро макси') >= 0 || array[i].indexOf('Евро макси') >= 0) {
-                        size = 'Евро Макси'
-                        if(array[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(array[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(array[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(array[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                    if(array[i].indexOf('семейное') >= 0 || array[i].indexOf('семейный') >= 0) {
-                        size = 'семейное'
-                        if(array[i].indexOf('на резинке') >= 0) {
-                            size += ' на резинке'
-                            for(let k = 40; k < 305; k+=5) {
-                                for(let l = 40; l < 305; l+=5) {
-                                    if(array[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                        for(let j = 10; j < 50; j+=10) {
-                                            if(array[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                                size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-                                                ws.getCell(`K${cellNumber}`).value = size
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(array[i].indexOf('с наволочками 50х70') >= 0) {
-                            size += ' с наволочками 50х70'
-                            ws.getCell(`K${cellNumber}`).value = size
-                        } else {
-                            ws.getCell(`K${cellNumber}`).value = size
-                        }
-                    }
-                } else {
-                    for(let k = 40; k < 305; k+=5) {
-                        for(let l = 40; l < 305; l+=5) {
-                            if(array[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-                                size = `${k.toString()}х${l.toString()}`
-                                for(let j = 10; j < 50; j+=10) {
-                                    if(array[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || array[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-                                        size = `${k.toString()}х${l.toString()}х${j.toString()}`
-                                        ws.getCell(`K${cellNumber}`).value = size
-                                    } else {
-                                        ws.getCell(`K${cellNumber}`).value = size
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                //Вставка размера конец
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
+            if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
-                ws.getCell(`L${cellNumber}`).value = '6302100001'
-                ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-                ws.getCell(`N${cellNumber}`).value = 'На модерации'                
+            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
+            ws.getCell(`L${cellNumber}`).value = '6302100001'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
-                cellNumber++
+            cellNumber++
 
         }
 
@@ -2194,13 +2182,7 @@ app.get('/wildberries', async function(req, res){
 
     }
 
-    if(new_items.length > 0) {
-
-        await createImport(new_items)
-
-    }
-
-    // res.json({wb_orders, names, new_items, current_items})
+    if(new_items.length > 0) await createImport(new_items)
 
     res.send(html)
 
@@ -4023,20 +4005,22 @@ app.get('/test_features', async function(req, res){
 
     const nat_cat = []
     const ncGtins = []
-    const ncNames = []
+    let ncNames = []
     let wh_prod = []
     const wh_code = []
-    const wh = []
+    let wh = []
     const fullGtins = []
     const fullNames = []
     const fullVendors = []
     const full_cat = []
     const successCode = []
+    const new_items = []
     const errorCodes = []
     const attributes = []
     const nc_difference = []
-    const full_difference = []
-    const main_difference = []
+    let full_difference = []
+    const full_matches = []
+    const names = []
 
     const wb = new exl.Workbook()
 
@@ -4114,6 +4098,16 @@ app.get('/test_features', async function(req, res){
 
     }
 
+    for(let i = 0; i < nat_cat.length; i++) {
+
+        if(nat_cat[i].name.indexOf('- Р ') >= 0) {
+
+            nat_cat[i].name = nat_cat[i].name.replace('- Р ', '')
+
+        }
+
+    }
+
     for(let i = 0; i < wh.length; i++) {
 
         if(nat_cat.findIndex(o => o.name === wh[i].name) < 0) {
@@ -4123,8 +4117,6 @@ app.get('/test_features', async function(req, res){
         }
 
     }
-
-    console.log(nc_difference.length)
 
     await wb.xlsx.readFile(fCatalogFile)
 
@@ -4179,558 +4171,435 @@ app.get('/test_features', async function(req, res){
 
     for(let i = 0; i < wh.length; i++) {
 
-        if(full_cat.findIndex(o => o.name === wh[i].name) < 0) {
+        if(full_cat.findIndex(o => o.vendor === wh[i].vendor) < 0) {
 
             full_difference.push(wh[i])
 
         }
 
-    }
+        if(full_cat.findIndex(o => o.vendor === wh[i].vendor) >= 0) {
 
-    console.log(full_difference.length)
-
-    // const newProducts = wh_prod.filter(function(item){
-
-    //     if(!nat_cat.indexOf(item) >= 0) {
-
-    //         return item
-
-    //     }
-
-    // })
-
-    // for(let i = 0; i < newProducts.length; i++) {
-
-    //     try {
-
-    //         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-                
-    //             "filter": {
-    //                 "offer_id": [
-    //                     wh_code[i]
-    //                 ],
-    //                 "visibility": "ALL"
-    //             },
-    //             "limit": 1000,
-    //             "sort_dir": "ASC"
-
-    //         }, {
-    //             headers: {
-    //                 'Host':'api-seller.ozon.ru',
-    //                 'Client-Id':'144225',
-    //                 'Api-Key':'c139ba7b-611a-4447-870c-f85d8e4ad9f8',
-    //                 'Content-Type':'application/json'
-    //             }
-    //         })
-
-    //         if(response) {
-    //             if(wh_prod[i].toLowerCase().indexOf('постельное') >= 0 && wh_prod[i].toLowerCase().indexOf('простын') < 0) {
-
-    //                 try{
-
-    //                     if(wh_prod[i].toLowerCase().indexOf('на резинке') >= 0) {                        
-
-    //                         if(wh_prod[i].indexOf('20') >= 0) {
-                                
-    //                             const size = `Пододеяльник: ${response.data.result[0].attributes.find(item => item.id === 6773).values[0].value}см; Простыня: ${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}x20см; Наволочка: ${response.data.result[0].attributes.find(item => item.id === 6772).values[0].value}см`
-    //                             const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                             attributes.push({
-    //                                 "p_title": wh_prod[i],
-    //                                 "p_code": wh_code[i],
-    //                                 "p_size": size,
-    //                                 "p_color": color.toUpperCase()
-    //                             })
-
-    //                         }
-
-    //                         if(wh_prod[i].indexOf('30') >= 0) {
-
-    //                             const size = `Пододеяльник: ${response.data.result[0].attributes.find(item => item.id === 6773).values[0].value}см; Простыня: ${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}x30см; Наволочка: ${response.data.result[0].attributes.find(item => item.id === 6772).values[0].value}см`
-    //                             const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                             attributes.push({
-    //                                 "p_title": wh_prod[i],
-    //                                 "p_code": wh_code[i],
-    //                                 "p_size": size,
-    //                                 "p_color": color.toUpperCase()
-    //                             })
-
-    //                         }
-
-    //                         if(wh_prod[i].indexOf('40') >= 0) {
-
-    //                             const size = `Пододеяльник: ${response.data.result[0].attributes.find(item => item.id === 6773).values[0].value}см; Простыня: ${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}x40см; Наволочка: ${response.data.result[0].attributes.find(item => item.id === 6772).values[0].value}см`
-    //                             const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                             attributes.push({
-    //                                 "p_title": wh_prod[i],
-    //                                 "p_code": wh_code[i],
-    //                                 "p_size": size,
-    //                                 "p_color": color.toUpperCase()
-    //                             })
-                                
-    //                         }
-
-    //                     }
-
-    //                     if(wh_prod[i].toLowerCase().indexOf('на резинке') < 0) {
-
-    //                         const size = `Пододеяльник: ${response.data.result[0].attributes.find(item => item.id === 6773).values[0].value}см; Простыня: ${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}см; Наволочка: ${response.data.result[0].attributes.find(item => item.id === 6772).values[0].value}см`
-    //                         const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                         attributes.push({
-    //                             "p_title": wh_prod[i],
-    //                             "p_code": wh_code[i],
-    //                             "p_size": size,
-    //                             "p_color": color.toUpperCase()
-    //                         })
-
-    //                     }
-
-    //                 } catch(err) {
-
-    //                     console.log(err)
-    //                     errorCodes.push({
-    //                         "p_title": wh_prod[i],
-    //                         "v_code": wh_code[i]
-    //                     })
-
-    //                 }
-
-    //             }
-
-    //             if(wh_prod[i].toLowerCase().indexOf('простын') >= 0 && wh_prod[i].toLowerCase().indexOf('постельное') < 0) {
-
-    //                 try{
-
-    //                     if(wh_prod[i].toLowerCase().indexOf('на резинке') >= 0) {
-
-    //                         const size = `${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}х${response.data.result[0].attributes.find(item => item.id === 8414).values[0].value}`
-    //                         const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                         attributes.push({
-    //                             "p_title": wh_prod[i],
-    //                             "p_code": wh_code[i],
-    //                             "p_size": size,
-    //                             "p_color": color.toUpperCase()
-    //                         })
-
-    //                     } else {
-
-    //                         const size = `${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}`
-    //                         const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                         attributes.push({
-    //                             "p_title": wh_prod[i],
-    //                             "p_code": wh_code[i],
-    //                             "p_size": size,
-    //                             "p_color": color.toUpperCase()
-    //                         })
-
-    //                     }
-
-    //                 } catch(err) {
-    //                     console.log(err)
-    //                     errorCodes.push({
-    //                         "p_title": wh_prod[i],
-    //                         "v_code": wh_code[i]
-    //                     })
-    //                 }
-
-    //             }
-
-    //             if(wh_prod[i].toLowerCase().indexOf('пододеяльник') >= 0) {
-
-    //                 try{
-
-    //                     const size = `${response.data.result[0].attributes.find(item => item.id === 6773).values[0].value}`
-    //                     const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                     attributes.push({
-    //                         "p_title": wh_prod[i],
-    //                         "p_code": wh_code[i],
-    //                         "p_size": size,
-    //                         "p_color": color.toUpperCase()
-    //                     })
-
-    //                 } catch(err) {
-    //                     console.log(err)
-    //                     errorCodes.push({
-    //                         "p_title": wh_prod[i],
-    //                         "v_code": wh_code[i]
-    //                     })
-    //                 }
-
-    //             }
-
-    //             if(wh_prod[i].toLowerCase().indexOf('наволочка') >= 0 && wh_prod[i].toLowerCase().indexOf('постельное') < 0) {
-
-    //                 try{
-
-    //                     const size = `${response.data.result[0].attributes.find(item => item.id === 6772).values[0].value}`
-    //                     const color = `${response.data.result[0].attributes.find(item => item.id === 10096).values[0].value}`
-
-    //                     attributes.push({
-    //                         "p_title": wh_prod[i],
-    //                         "p_code": wh_code[i],
-    //                         "p_size": size,
-    //                         "p_color": color.toUpperCase()
-    //                     })
-
-    //                 } catch(err) {
-
-    //                     console.log(err)
-    //                     errorCodes.push({
-    //                         "p_title": wh_prod[i],
-    //                         "v_code": wh_code[i]
-    //                     })
-                        
-    //                 }
-
-    //             }
-    //         }
-
-    //     } catch(err) {
-
-    //         console.log(err)
-    //         errorCodes.push({
-    //             "p_title": wh_prod[i],
-    //             "v_code": wh_code[i]
-    //         })
-
-    //     }
-    // }
-
-    // async function createImport(new_products) {
-    //     const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
-        
-    //     const wb = new exl.Workbook()
-
-    //     await wb.xlsx.readFile(fileName)
-
-    //     const ws = wb.getWorksheet('IMPORT_TNVED_6302')
-
-    //     let cellNumber = 5
-
-    //     for(i = 0; i < new_products.length; i++) {
-    //         let size = ''            
-    //             ws.getCell(`A${cellNumber}`).value = '6302'
-    //             ws.getCell(`B${cellNumber}`).value = new_products[i].p_title
-    //             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-    //             ws.getCell(`D${cellNumber}`).value = 'Артикул'
-    //             ws.getCell(`E${cellNumber}`).value = new_products[i].p_code
-    //             ws.getCell(`G${cellNumber}`).value = new_products[i].p_color
-    //             ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
-
-    //             if(new_products[i].p_title.indexOf('Постельное') >= 0 || new_products[i].p_title.indexOf('Детское') >= 0) {
-    //                 ws.getCell(`F${cellNumber}`).value = 'КОМПЛЕКТ'
-    //             }
-
-    //             if(new_products[i].p_title.indexOf('Полотенце') >= 0) {
-    //                 ws.getCell(`F${cellNumber}`).value = 'ИЗДЕЛИЯ ДЛЯ САУНЫ'
-    //             }
-                
-    //             if(new_products[i].p_title.indexOf('Простыня') >= 0) {
-    //                 if(new_products[i].p_title.indexOf('на резинке') >= 0) {
-    //                     ws.getCell(`F${cellNumber}`).value = 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-    //                 } else {
-    //                     ws.getCell(`F${cellNumber}`).value = 'ПРОСТЫНЯ'
-    //                 }
-    //             }
-    //             if(new_products[i].p_title.indexOf('Пододеяльник') >= 0) {
-    //                 ws.getCell(`F${cellNumber}`).value = 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-    //             }
-    //             if(new_products[i].p_title.indexOf('Наволочка') >= 0) {
-    //                 if(new_products[i].p_size === '40x60' || new_products[i].p_size === '50x70') {
-    //                     ws.getCell(`F${cellNumber}`).value = 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-    //                 } else {
-    //                     ws.getCell(`F${cellNumber}`).value = 'НАВОЛОЧКА КВАДРАТНАЯ'
-    //                 }
-    //             }
-    //             if(new_products[i].p_title.indexOf('Наматрасник') >= 0) {
-    //                 ws.getCell(`F${cellNumber}`).value = 'НАМАТРАСНИК'
-    //             }
-    //             if(new_products[i].p_title.indexOf('страйп-сатин') >= 0 || new_products[i].p_title.indexOf('страйп сатин') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-    //             }
-    //             if(new_products[i].p_title.indexOf('твил-сатин') >= 0 || new_products[i].p_title.indexOf('твил сатин') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'ТВИЛ-САТИН'
-    //             }
-    //             if(new_products[i].p_title.indexOf('тенсел') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'ТЕНСЕЛЬ'
-    //             }
-    //             if(new_products[i].p_title.indexOf('бяз') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'БЯЗЬ'
-    //             }
-    //             if(new_products[i].p_title.indexOf('поплин') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'ПОПЛИН'
-    //             }
-    //             if(new_products[i].p_title.indexOf('сатин') >= 0 && new_products[i].p_title.indexOf('-сатин') < 0 && new_products[i].p_title.indexOf('п сатин') < 0 && new_products[i].p_title.indexOf('л сатин') < 0 && new_products[i].p_title.indexOf('сатин-') < 0 && new_products[i].p_title.indexOf('сатин ж') < 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'САТИН'
-    //             }
-    //             if(new_products[i].p_title.indexOf('вареный') >= 0 || new_products[i].p_title.indexOf('варёный') >= 0 || new_products[i].p_title.indexOf('вареного') >= 0 || new_products[i].p_title.indexOf('варёного') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-    //             }
-    //             if(new_products[i].p_title.indexOf('сатин-жаккард') >= 0 || new_products[i].p_title.indexOf('сатин жаккард') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'САТИН-ЖАККАРД'
-    //             }
-    //             if(new_products[i].p_title.indexOf('страйп-микрофибр') >= 0 || new_products[i].p_title.indexOf('страйп микрофибр') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'МИКРОФИБРА'
-    //             }
-    //             if(new_products[i].p_title.indexOf('шерст') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'ПОЛИЭФИР'
-    //             }
-    //             if(new_products[i].p_title.indexOf('перкал') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'ПЕРКАЛЬ'
-    //             }
-    //             if(new_products[i].p_title.indexOf('махра') >= 0 || new_products[i].p_title.indexOf('махровое') >= 0) {
-    //                 ws.getCell(`I${cellNumber}`).value = 'МАХРОВАЯ ТКАНЬ'
-    //             }
-
-    //             if(new_products[i].p_title.indexOf('тенсел') >= 0) {ws.getCell(`J${cellNumber}`).value = '100% Эвкалипт'}
-    //             else if(new_products[i].p_title.indexOf('шерст') >= 0) {ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'}
-    //             else {ws.getCell(`J${cellNumber}`).value = '100% Хлопок'}
-
-
-
-    //             //Вставка размера начало
-                
-    //             // if(new_products[i].indexOf('Постельное') >= 0) {
-    //             //     if(new_products[i].indexOf('1,5 спальное') >= 0 || new_products[i].indexOf('1,5 спальный') >= 0) {
-    //             //         size = '1,5 спальное'
-    //             //         if(new_products[i].indexOf('на резинке') >= 0) {
-    //             //             size += ' на резинке'
-    //             //             for(let k = 40; k < 305; k+=5) {
-    //             //                 for(let l = 40; l < 305; l+=5) {
-    //             //                     if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-    //             //                         for(let j = 10; j < 50; j+=10) {
-    //             //                             if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-    //             //                                 size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-    //             //                                 ws.getCell(`K${cellNumber}`).value = size
-    //             //                             }
-    //             //                         }
-    //             //                     }
-    //             //                 }
-    //             //             }
-    //             //         }
-    //             //         if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-    //             //             size += ' с наволочками 50х70'
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         } else {
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         }
-    //             //     }
-    //             //     if(new_products[i].indexOf('2 спальное') >= 0 || new_products[i].indexOf('2 спальный') >= 0) {
-    //             //         size = '2 спальное'
-    //             //         if(new_products[i].indexOf('с Евро') >= 0) {
-    //             //             size += ' с Евро простыней'
-    //             //         }
-    //             //         if(new_products[i].indexOf('на резинке') >= 0) {
-    //             //             size += ' на резинке'
-    //             //             for(let k = 40; k < 305; k+=5) {
-    //             //                 for(let l = 40; l < 305; l+=5) {
-    //             //                     if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-    //             //                         for(let j = 10; j < 50; j+=10) {
-    //             //                             if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-    //             //                                 size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-    //             //                                 ws.getCell(`K${cellNumber}`).value = size
-    //             //                             }
-    //             //                         }
-    //             //                     }
-    //             //                 }
-    //             //             }
-    //             //         }
-    //             //         if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-    //             //             size += ' с наволочками 50х70'
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         } else {
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         }
-    //             //     }
-    //             //     if(new_products[i].indexOf('Евро -') >= 0 || new_products[i].indexOf('евро -') >= 0 || new_products[i].indexOf('Евро на') >= 0 || new_products[i].indexOf('евро на') >= 0) {
-    //             //         size = 'Евро'
-    //             //         if(new_products[i].indexOf('на резинке') >= 0) {
-    //             //             size += ' на резинке'
-    //             //             for(let k = 40; k < 305; k+=5) {
-    //             //                 for(let l = 40; l < 305; l+=5) {
-    //             //                     if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-    //             //                         for(let j = 10; j < 50; j+=10) {
-    //             //                             if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-    //             //                                 size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-    //             //                                 ws.getCell(`K${cellNumber}`).value = size
-    //             //                             }
-    //             //                         }
-    //             //                     }
-    //             //                 }
-    //             //             }
-    //             //         }
-    //             //         if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-    //             //             size += ' с наволочками 50х70'
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         } else {
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         }
-    //             //     }
-    //             //     if(new_products[i].indexOf('Евро Макси') >= 0 || new_products[i].indexOf('евро макси') >= 0 || new_products[i].indexOf('Евро макси') >= 0) {
-    //             //         size = 'Евро Макси'
-    //             //         if(new_products[i].indexOf('на резинке') >= 0) {
-    //             //             size += ' на резинке'
-    //             //             for(let k = 40; k < 305; k+=5) {
-    //             //                 for(let l = 40; l < 305; l+=5) {
-    //             //                     if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-    //             //                         for(let j = 10; j < 50; j+=10) {
-    //             //                             if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-    //             //                                 size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-    //             //                                 ws.getCell(`K${cellNumber}`).value = size
-    //             //                             }
-    //             //                         }
-    //             //                     }
-    //             //                 }
-    //             //             }
-    //             //         }
-    //             //         if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-    //             //             size += ' с наволочками 50х70'
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         } else {
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         }
-    //             //     }
-    //             //     if(new_products[i].indexOf('семейное') >= 0 || new_products[i].indexOf('семейный') >= 0) {
-    //             //         size = 'семейное'
-    //             //         if(new_products[i].indexOf('на резинке') >= 0) {
-    //             //             size += ' на резинке'
-    //             //             for(let k = 40; k < 305; k+=5) {
-    //             //                 for(let l = 40; l < 305; l+=5) {
-    //             //                     if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-    //             //                         for(let j = 10; j < 50; j+=10) {
-    //             //                             if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-    //             //                                 size += ` ${k.toString()}х${l.toString()}х${j.toString()}`
-    //             //                                 ws.getCell(`K${cellNumber}`).value = size
-    //             //                             }
-    //             //                         }
-    //             //                     }
-    //             //                 }
-    //             //             }
-    //             //         }
-    //             //         if(new_products[i].indexOf('с наволочками 50х70') >= 0) {
-    //             //             size += ' с наволочками 50х70'
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         } else {
-    //             //             ws.getCell(`K${cellNumber}`).value = size
-    //             //         }
-    //             //     }
-    //             // } else {
-    //             //     for(let k = 40; k < 305; k+=5) {
-    //             //         for(let l = 40; l < 305; l+=5) {
-    //             //             if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()}`) >= 0) {
-    //             //                 size = `${k.toString()}х${l.toString()}`
-    //             //                 for(let j = 10; j < 50; j+=10) {
-    //             //                     if(new_products[i].indexOf(` ${k.toString()}х${l.toString()}х${j.toString()}`) >= 0 || new_products[i].indexOf(` ${k.toString()} х ${l.toString()} х ${j.toString()}`) >= 0) {
-    //             //                         size = `${k.toString()}х${l.toString()}х${j.toString()}`
-    //             //                         ws.getCell(`K${cellNumber}`).value = size
-    //             //                     } else {
-    //             //                         ws.getCell(`K${cellNumber}`).value = size
-    //             //                     }
-    //             //                 }
-    //             //             }
-    //             //         }
-    //             //     }
-    //             // }
-                
-    //             // //Вставка размера конец
-
-    //             ws.getCell(`K${cellNumber}`).value = new_products[i].p_size
-    //             ws.getCell(`L${cellNumber}`).value = '6302100001'
-    //             ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-    //             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
-
-    //             cellNumber++
-
-    //     }
-
-    //     ws.unMergeCells('D2')
-
-    //     ws.getCell('E2').value = '13914'
-
-    //     ws.getCell('E2').fill = {
-    //         type: 'pattern',
-    //         pattern: 'solid',
-    //         fgColor:{argb:'E3E3E3'}
-    //     }
-
-    //     ws.getCell('E2').font = {
-    //         size: 10,
-    //         name: 'Arial'
-    //     }
-
-    //     ws.getCell('E2').alignment = {
-    //         horizontal: 'center',
-    //         vertical: 'bottom'
-    //     }
-
-    //     // ws.mergeCells('D2:E2')
-
-    //     const date_ob = new Date()
-
-    //     let month = date_ob.getMonth() + 1
-
-    //     let filePath = ''
-
-    //     month < 10 ? filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}` : filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_${month}`
-
-    //     fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
-    //         if(err) {
-    //             await wb.xlsx.writeFile(`${filePath}.xlsx`)
-    //         } else {
-    //             let count = 1
-    //             fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
-    //                 if(err) {
-    //                     await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
-    //                 } else {
-    //                     await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
-    //                 }
-    //             })
-                
-    //         }
-    //     })
-
-    // }
-
-    // const workbook = new exl.Workbook()
-
-    // const sheet = workbook.addWorksheet('Отчет')
-
-    // sheet.columns = [
-    //     {header: 'Наименование', key: 'title', width: 100},
-    //     {header: 'Артикул', key: 'code', width: 20}
-    // ]
-
-    // for(let i = 0; i < errorCodes.length; i++) {
-
-    //     sheet.addRow({title: errorCodes[i].p_title, code: errorCodes[i].v_code})
-
-    // }
-
-    // await workbook.xlsx.writeFile('./public/Отчет.xlsx')
-
-    // await createImport(attributes)
-
-    // res.send(attributes)
-
-    for(let i = 0; i < nc_difference.length; i++) {
-
-        if(full_difference.findIndex(o => o.vendor === nc_difference[i].vendor) < 0) {
-
-            main_difference.push(nc_difference[i])
+            full_matches.push(wh[i])
 
         }
 
     }
 
-    console.log(main_difference.length)
+    full_difference = full_difference.filter(o => {
 
-    res.json(main_difference)
+        if(nat_cat.findIndex(i => i.name === o.name) < 0) {
+
+            console.log(o)
+            return o
+
+        }
+
+    })
+
+    full_difference = full_difference.filter(o => o.name.indexOf('Наматрасник') < 0)
+
+    for(let i = 0; i < full_difference.length; i++) {
+
+        try {
+
+            const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+                        
+                "filter": {
+                    "offer_id": [
+                        full_difference[i].vendor
+                    ],
+                    "visibility": "ALL"
+                },
+                "limit": 1000,
+                "sort_dir": "ASC"
+
+            }, {
+                headers: {
+                    'Host':'api-seller.ozon.ru',
+                    'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                    'Api-Key':`${process.env.OZON_API_KEY}`,
+                    'Content-Type':'application/json'
+                }
+            })
+
+            if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
+
+                names.push({            
+                    'vendor': full_difference[i].vendor,
+                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                    .trim()                  // убрать пробелы по краям
+                                                    .replace(/\s+/g, ' ')
+                                                    .replace('- Р ', ''),
+                    'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
+                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+                })   
+
+            }
+
+            if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+
+                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                    names.push({            
+                        'vendor': full_difference[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' ')
+                                                        .replace('- Р ', ''),
+                        'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+                    })
+
+                }
+
+                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                    names.push({            
+                        'vendor': full_difference[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' ')
+                                                        .replace('- Р ', ''),
+                        'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'ПРОСТЫНЯ'
+                    })
+
+                }
+
+            }
+
+            if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+
+                if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
+
+                    names.push({
+                        'vendor': full_difference[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' ')
+                                                        .replace('- Р ', ''),
+                        'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                    })
+
+                } else {
+
+                    names.push({
+                        'vendor': full_difference[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' ')
+                                                        .replace('- Р ', ''),
+                        'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                    })
+
+                }
+
+            }
+
+            if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
+
+                if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+
+                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                        if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                            names.push({
+                                'vendor': full_difference[i].vendor,
+                                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')
+                                                                .replace('- Р ', ''),
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                            names.push({
+                                'vendor': full_difference[i].vendor,
+                                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')
+                                                                .replace('- Р ', ''),
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                            names.push({
+                                'vendor': full_difference[i].vendor,
+                                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')
+                                                                .replace('- Р ', ''),
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ'
+                            })
+
+                        }
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                        names.push({
+                            'vendor': full_difference[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' ')
+                                                            .replace('- Р ', ''),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                }
+
+                if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+
+                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                        if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                            names.push({
+                                'vendor': full_difference[i].vendor,
+                                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')
+                                                                .replace('- Р ', ''),
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                            names.push({
+                                'vendor': full_difference[i].vendor,
+                                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')
+                                                                .replace('- Р ', ''),
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                            names.push({
+                                'vendor': full_difference[i].vendor,
+                                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')
+                                                                .replace('- Р ', ''),
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ'
+                            })
+
+                        }
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                        names.push({
+                            'vendor': full_difference[i].vendor,
+                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' ')
+                                                            .replace('- Р ', ''),
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ'
+                        })
+
+                    }
+
+                }
+                
+
+            }
+
+            new_items.push(response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                       .trim()                  // убрать пробелы по краям
+                                                       .replace(/\s+/g, ' ')
+                                                       .replace('- Р ', ''),)
+
+        } catch(err) {
+
+            errorCodes.push(full_difference[i])
+
+        }
+
+    }
+
+    async function createImport(array) {
+
+        const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
+        
+        const wb = new exl.Workbook()
+
+        await wb.xlsx.readFile(fileName)
+
+        const ws = wb.getWorksheet('IMPORT_TNVED_6302')
+
+        let cellNumber = 5
+
+        for(let i = 0; i < array.length; i++) {
+
+            console.log(array[i])
+
+            ws.getCell(`A${cellNumber}`).value = 6302
+            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
+            ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
+            ws.getCell(`D${cellNumber}`).value = 'Артикул'
+            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
+            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
+            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
+            ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
+
+            if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+            if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
+            if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
+            if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+            
+            if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
+
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
+            if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
+
+            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
+            ws.getCell(`L${cellNumber}`).value = '6302100001'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`N${cellNumber}`).value = 'На модерации'                
+
+            cellNumber++
+
+        }
+
+        ws.unMergeCells('D2')
+
+        ws.getCell('E2').value = '13914'
+
+        ws.getCell('E2').fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor:{argb:'E3E3E3'}
+        }
+
+        ws.getCell('E2').font = {
+            size: 10,
+            name: 'Arial'
+        }
+
+        ws.getCell('E2').alignment = {
+            horizontal: 'center',
+            vertical: 'bottom'
+        }        
+
+        const date_ob = new Date()
+
+        let month = date_ob.getMonth() + 1
+
+        let filePath = ''
+
+        month < 10 ? filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon`
+
+        fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
+            if(err) {
+                await wb.xlsx.writeFile(`${filePath}.xlsx`)
+            } else {
+                let count = 1
+                fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
+                    if(err) {
+                        await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
+                    } else {
+                        await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
+                    }
+                })
+                
+            }
+        })
+
+    }
+
+    async function createReport(array) {
+
+        const workbook = new exl.Workbook()
+
+        const sheet = workbook.addWorksheet('Отчет')
+
+        sheet.columns = [
+            {header: 'Наименование', key: 'title', width: 100},
+            {header: 'Артикул', key: 'code', width: 20}
+        ]
+
+        for(let i = 0; i < array.length; i++) {
+
+            sheet.addRow({title: array[i].name, code: array[i].vendor})
+
+        }
+
+        await workbook.xlsx.writeFile('./public/Отчет_new.xlsx')
+
+    }
+
+    console.log(full_difference.length)
+
+    await createImport(new_items)
+
+    await createReport(errorCodes)
+
+    // for(let i = 0; i < nc_difference.length; i++) {
+
+    //     if(full_difference.findIndex(o => o.vendor === nc_difference[i].vendor) < 0) {
+
+    //         main_difference.push(nc_difference[i])
+
+    //     }
+
+    // }
+
+    res.json(new_items)
 
 })
 
@@ -5797,1295 +5666,1019 @@ app.get('/wildberries/set_marks', async function (req, res){
     
 })
 
-app.get('/test_wb', async function (req, res){
+// app.get('/test_wb', async function (req, res){
 
-    const new_items = []
-    const current_items = []
-    const moderation_items = []
-    const wb_orders = []
-    const nat_cat = []
-    let names = []
+//     const new_items = []
+//     const current_items = []
+//     const moderation_items = []
+//     const wb_orders = []
+//     const nat_cat = []
+//     let names = []
 
-    let html = `${headerComponent}
-                    <title>Импорт - WILDBERRIES</title>
-                </head>
-                <body>
-                    ${navComponent}
-                        <section class="sub-nav import-main">
-                            <div class="import-control">`
+//     let html = `${headerComponent}
+//                     <title>Импорт - WILDBERRIES</title>
+//                 </head>
+//                 <body>
+//                     ${navComponent}
+//                         <section class="sub-nav import-main">
+//                             <div class="import-control">`
 
-    async function renderImportButtons(array) {
+//     async function renderImportButtons(array) {
 
-        let address = ''
+//         let address = ''
 
-        for(let i = 0; i < array.length; i++) {                
-            if(array[i] === 'yandex') {
-                address = 'yandex'
-                html += `<button class="button-import">
-                            <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
-                        </button>`
-            }
+//         for(let i = 0; i < array.length; i++) {                
+//             if(array[i] === 'yandex') {
+//                 address = 'yandex'
+//                 html += `<button class="button-import">
+//                             <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
+//                         </button>`
+//             }
 
-            if(array[i] !== 'yandex') {
-                array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-                html += `<button class="button-import">
-                            <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                        </button>`
-            }
+//             if(array[i] !== 'yandex') {
+//                 array[i] === 'wb' ? address = 'wildberries' : address = array[i]
+//                 html += `<button class="button-import">
+//                             <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
+//                         </button>`
+//             }
             
-        }
+//         }
 
-        html += `   </div>`
+//         html += `   </div>`
 
-    }
+//     }
 
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
+//     async function renderMarkingButtons() {
+//         html += `<div class="marking-control">
+//                     <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
+//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+//                  </div>`
+//     }
 
-    await renderImportButtons(buttons)
-    await renderMarkingButtons()
+//     await renderImportButtons(buttons)
+//     await renderMarkingButtons()
 
-    html += `</section>`
+//     html += `</section>`
 
-    const wb = new exl.Workbook()
+//     const wb = new exl.Workbook()
 
-    const hsFile = './public/Краткий отчет.xlsx'
-    const wbFile = './public/wildberries/new.xlsx'
+//     const hsFile = './public/Краткий отчет.xlsx'
+//     const wbFile = './public/wildberries/new.xlsx'
 
-    await wb.xlsx.readFile(hsFile)
+//     await wb.xlsx.readFile(hsFile)
         
-    const ws = wb.getWorksheet('Краткий отчет')
+//     const ws = wb.getWorksheet('Краткий отчет')
 
-    const c2 = ws.getColumn(2)
+//     const c2 = ws.getColumn(2)
 
-    c2.eachCell(c => {
-        nat_cat.push(c.value)
-    })
+//     c2.eachCell(c => {
+//         nat_cat.push(c.value)
+//     })
 
-    await wb.xlsx.readFile(wbFile)
+//     await wb.xlsx.readFile(wbFile)
 
-    const _ws = wb.getWorksheet('Сборочные задания')
+//     const _ws = wb.getWorksheet('Сборочные задания')
 
-    const c14 = _ws.getColumn(14)
+//     const c14 = _ws.getColumn(14)
 
-    c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
+//     c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
-        if(rowNumber < 2) return
+//         if(rowNumber < 2) return
 
-        if(wb_orders.findIndex(o => o.vendor === c.value) >= 0) {
+//         if(wb_orders.findIndex(o => o.vendor === c.value) >= 0) {
 
-            wb_orders.find(o => o.vendor === c.value).quantity++
+//             wb_orders.find(o => o.vendor === c.value).quantity++
 
-        }
+//         }
 
-        if(wb_orders.findIndex(o => o.vendor === c.value) < 0) {
+//         if(wb_orders.findIndex(o => o.vendor === c.value) < 0) {
 
-            wb_orders.push({
-                'vendor': c.value,
-                'quantity': 1
-            })
+//             wb_orders.push({
+//                 'vendor': c.value,
+//                 'quantity': 1
+//             })
 
-        }
+//         }
 
-    })
+//     })
 
-    for(let i = 0; i < wb_orders.length; i++) {
+//     for(let i = 0; i < wb_orders.length; i++) {
 
-        const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+//         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
-            "filter": {
-                "offer_id": [
-                    wb_orders[i].vendor
-                ],
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
+//             "filter": {
+//                 "offer_id": [
+//                     wb_orders[i].vendor
+//                 ],
+//                 "visibility": "ALL"
+//             },
+//             "limit": 1000,
+//             "sort_dir": "ASC"
 
-        }, {
-            headers: {
-                'Host':'api-seller.ozon.ru',
-                'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-                'Api-Key':`${process.env.OZON_API_KEY}`,
-                'Content-Type':'application/json'
-            }
-        })
+//         }, {
+//             headers: {
+//                 'Host':'api-seller.ozon.ru',
+//                 'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+//                 'Api-Key':`${process.env.OZON_API_KEY}`,
+//                 'Content-Type':'application/json'
+//             }
+//         })
 
-        if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
+//         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
-            names.push({            
-                'vendor': wb_orders[i].vendor,
-                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                .trim()                  // убрать пробелы по краям
-                                                .replace(/\s+/g, ' '),
-                'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
-                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-            })   
+//             names.push({            
+//                 'vendor': wb_orders[i].vendor,
+//                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                 .trim()                  // убрать пробелы по краям
+//                                                 .replace(/\s+/g, ' '),
+//                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
+//                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                 'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+//             })   
 
-        }
+//         }
 
-        if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+//         if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-            if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+//             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                names.push({            
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-                })
+//                 names.push({            
+//                     'vendor': wb_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+//                 })
 
-            }
+//             }
 
-            if(response.data.result[0].name.indexOf('на резинке') < 0) {
+//             if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                names.push({            
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПРОСТЫНЯ'
-                })
+//                 names.push({            
+//                     'vendor': wb_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'ПРОСТЫНЯ'
+//                 })
 
-            }
+//             }
 
-        }
+//         }
 
-        if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+//         if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-            if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
+//             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
-                names.push({
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-                })
+//                 names.push({
+//                     'vendor': wb_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+//                 })
 
-            } else {
+//             } else {
 
-                names.push({
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
-                })
+//                 names.push({
+//                     'vendor': wb_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+//                 })
 
-            }
+//             }
 
-        }
+//         }
 
-        if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
+//         if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
 
-            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': wb_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': wb_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': wb_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                }
+//                 }
 
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                    names.push({
-                        'vendor': wb_orders[i].vendor,
-                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                        .trim()                  // убрать пробелы по краям
-                                                        .replace(/\s+/g, ' '),
-                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
-                    })
+//                     names.push({
+//                         'vendor': wb_orders[i].vendor,
+//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                         .trim()                  // убрать пробелы по краям
+//                                                         .replace(/\s+/g, ' '),
+//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                         'productType': 'КОМПЛЕКТ'
+//                     })
 
-                }
+//                 }
 
-            }
+//             }
 
-            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': wb_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': wb_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': wb_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                }
+//                 }
 
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                    names.push({
-                        'vendor': wb_orders[i].vendor,
-                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                        .trim()                  // убрать пробелы по краям
-                                                        .replace(/\s+/g, ' '),
-                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
-                    })
+//                     names.push({
+//                         'vendor': wb_orders[i].vendor,
+//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                         .trim()                  // убрать пробелы по краям
+//                                                         .replace(/\s+/g, ' '),
+//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                         'productType': 'КОМПЛЕКТ'
+//                     })
 
-                }
+//                 }
 
-            }
+//             }
             
 
-        }
+//         }
 
-        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0)
+//         names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0)
 
-    }
+//     }
 
-    names.forEach(el => {
+//     names.forEach(el => {
 
-            if(nat_cat.indexOf(el.name) < 0) {
-                new_items.push(el.name)
-            }
+//             if(nat_cat.indexOf(el.name) < 0) {
+//                 new_items.push(el.name)
+//             }
 
-            if(nat_cat.indexOf(el.name) >= 0) {
-                current_items.push(el.name)
-            }
+//             if(nat_cat.indexOf(el.name) >= 0) {
+//                 current_items.push(el.name)
+//             }
 
-    })
+//     })
 
-    html += `<section class="table">
-                <div class="marks-table">
-                    <div class="marks-table-header">
-                        <div class="header-cell">Наименование</div>
-                        <div class="header-cell">Статус</div>                            
-                    </div>
-                <div class="header-wrapper"></div>`
+//     html += `<section class="table">
+//                 <div class="marks-table">
+//                     <div class="marks-table-header">
+//                         <div class="header-cell">Наименование</div>
+//                         <div class="header-cell">Статус</div>                            
+//                     </div>
+//                 <div class="header-wrapper"></div>`
 
-    names.forEach(elem => {
-        if(new_items.indexOf(elem.name) >= 0) {
-            html += `<div class="table-row">
-                        <span id="name">${elem.name}</span>
-                        <span id="status-new">Новый товар</span>
-                     </div>`
-        } else if(moderation_items.indexOf(elem.name) >= 0){
-            html += `<div class="table-row">
-                        <span id="name">${elem.name}</span>
-                        <span id="status-moderation">На модерации</span>
-                     </div>`        
-        } else {
-            html += `<div class="table-row">
-                        <span id="name">${elem.name}</span>
-                        <span id="status-current">Актуальный товар</span>
-                     </div>`
-        }
-    })
+//     names.forEach(elem => {
+//         if(new_items.indexOf(elem.name) >= 0) {
+//             html += `<div class="table-row">
+//                         <span id="name">${elem.name}</span>
+//                         <span id="status-new">Новый товар</span>
+//                      </div>`
+//         } else if(moderation_items.indexOf(elem.name) >= 0){
+//             html += `<div class="table-row">
+//                         <span id="name">${elem.name}</span>
+//                         <span id="status-moderation">На модерации</span>
+//                      </div>`        
+//         } else {
+//             html += `<div class="table-row">
+//                         <span id="name">${elem.name}</span>
+//                         <span id="status-current">Актуальный товар</span>
+//                      </div>`
+//         }
+//     })
 
-    html += `</section>
-             <section class="action-form">
-                <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
-             </section>
-             <div class="body-wrapper"></div>                        
-             ${footerComponent}`
+//     html += `</section>
+//              <section class="action-form">
+//                 <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
+//              </section>
+//              <div class="body-wrapper"></div>                        
+//              ${footerComponent}`
 
-    async function createImport(array) {
+//     async function createImport(array) {
 
-        const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
+//         const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
         
-        const wb = new exl.Workbook()
+//         const wb = new exl.Workbook()
 
-        await wb.xlsx.readFile(fileName)
+//         await wb.xlsx.readFile(fileName)
 
-        const ws = wb.getWorksheet('IMPORT_TNVED_6302')
+//         const ws = wb.getWorksheet('IMPORT_TNVED_6302')
 
-        let cellNumber = 5
+//         let cellNumber = 5
 
-        for(let i = 0; i < array.length; i++) {
+//         for(let i = 0; i < array.length; i++) {
 
-            ws.getCell(`A${cellNumber}`).value = 6302
-            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
-            ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-            ws.getCell(`D${cellNumber}`).value = 'Артикул'
-            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
-            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
-            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
-            ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
+//             ws.getCell(`A${cellNumber}`).value = 6302
+//             ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
+//             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
+//             ws.getCell(`D${cellNumber}`).value = 'Артикул'
+//             ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
+//             ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
+//             ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
+//             ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
-            if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-            if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
-            if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+//             if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+//             if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
+//             if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
+//             if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
             
-            if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
+//             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
-            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
-            if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
+//             if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
+//             if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
-            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
-            ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-            ws.getCell(`N${cellNumber}`).value = 'На модерации'                
+//             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
+//             ws.getCell(`L${cellNumber}`).value = '6302100001'
+//             ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+//             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
-            cellNumber++
+//             cellNumber++
 
-        }
+//         }
 
-        ws.unMergeCells('D2')
+//         ws.unMergeCells('D2')
 
-        ws.getCell('E2').value = '13914'
+//         ws.getCell('E2').value = '13914'
 
-        ws.getCell('E2').fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor:{argb:'E3E3E3'}
-        }
+//         ws.getCell('E2').fill = {
+//             type: 'pattern',
+//             pattern: 'solid',
+//             fgColor:{argb:'E3E3E3'}
+//         }
 
-        ws.getCell('E2').font = {
-            size: 10,
-            name: 'Arial'
-        }
+//         ws.getCell('E2').font = {
+//             size: 10,
+//             name: 'Arial'
+//         }
 
-        ws.getCell('E2').alignment = {
-            horizontal: 'center',
-            vertical: 'bottom'
-        }        
+//         ws.getCell('E2').alignment = {
+//             horizontal: 'center',
+//             vertical: 'bottom'
+//         }        
 
-        const date_ob = new Date()
+//         const date_ob = new Date()
 
-        let month = date_ob.getMonth() + 1
+//         let month = date_ob.getMonth() + 1
 
-        let filePath = ''
+//         let filePath = ''
 
-        month < 10 ? filePath = `./public/wildberries/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_wildberries` : filePath = `./public/wildberries/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_wildberries`
+//         month < 10 ? filePath = `./public/wildberries/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_wildberries` : filePath = `./public/wildberries/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_wildberries`
 
-        fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
-            if(err) {
-                await wb.xlsx.writeFile(`${filePath}.xlsx`)
-            } else {
-                let count = 1
-                fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
-                    if(err) {
-                        await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
-                    } else {
-                        await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
-                    }
-                })
+//         fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
+//             if(err) {
+//                 await wb.xlsx.writeFile(`${filePath}.xlsx`)
+//             } else {
+//                 let count = 1
+//                 fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
+//                     if(err) {
+//                         await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
+//                     } else {
+//                         await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
+//                     }
+//                 })
                 
-            }
-        })
+//             }
+//         })
 
-    }
+//     }
 
-    if(new_items.length > 0) await createImport(new_items)
+//     if(new_items.length > 0) await createImport(new_items)
 
-    res.send(html)
+//     res.send(html)
 
-    // res.json({names, wb_orders, new_items})
+//     // res.json({names, wb_orders, new_items})
 
-})
+// })
 
-app.get('/test_oz', async function (req, res){
+// app.get('/test_oz', async function (req, res){
 
-    const nat_cat = []
-    const nat_catGtins = []
-    const nat_catNames = []
-    let oz_orders = []
-    const new_items = []
-    const current_items = []
-    const names = []
+//     const nat_cat = []
+//     const nat_catGtins = []
+//     const nat_catNames = []
+//     let oz_orders = []
+//     const new_items = []
+//     const current_items = []
+//     const names = []
 
-    let html = `${headerComponent}
-                    <title>Импорт - OZON</title>
-                </head>
-                <body>
-                        ${navComponent}
-                        <section class="sub-nav import-main">
-                            <div class="import-control">`
+//     let html = `${headerComponent}
+//                     <title>Импорт - OZON</title>
+//                 </head>
+//                 <body>
+//                         ${navComponent}
+//                         <section class="sub-nav import-main">
+//                             <div class="import-control">`
 
-    async function renderImportButtons(array) {
+//     async function renderImportButtons(array) {
 
-        let address = ''
+//         let address = ''
 
-        for(let i = 0; i < array.length; i++) {                
-            if(array[i] === 'yandex') {
-                address = 'yandex'
-                html += `<button class="button-import">
-                            <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
-                        </button>`
-            }
+//         for(let i = 0; i < array.length; i++) {                
+//             if(array[i] === 'yandex') {
+//                 address = 'yandex'
+//                 html += `<button class="button-import">
+//                             <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
+//                         </button>`
+//             }
 
-            if(array[i] !== 'yandex') {
-                array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-                html += `<button class="button-import">
-                            <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                        </button>`
-            }
+//             if(array[i] !== 'yandex') {
+//                 array[i] === 'wb' ? address = 'wildberries' : address = array[i]
+//                 html += `<button class="button-import">
+//                             <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
+//                         </button>`
+//             }
             
-        }
+//         }
 
-        html += `   </div>`
+//         html += `   </div>`
 
-    }
+//     }
 
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
+//     async function renderMarkingButtons() {
+//         html += `<div class="marking-control">
+//                     <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
+//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+//                  </div>`
+//     }
 
-    await renderImportButtons(buttons)
-    await renderMarkingButtons()
+//     await renderImportButtons(buttons)
+//     await renderMarkingButtons()
 
-    html += `</section>`
+//     html += `</section>`
 
-    const wb = new exl.Workbook()
+//     const wb = new exl.Workbook()
 
-    await wb.xlsx.readFile('./public/Краткий отчет.xlsx')
+//     await wb.xlsx.readFile('./public/Краткий отчет.xlsx')
 
-    const nc_ws = wb.getWorksheet('Краткий отчет')
+//     const nc_ws = wb.getWorksheet('Краткий отчет')
 
-    const nc_c1 = nc_ws.getColumn(1)
+//     const nc_c1 = nc_ws.getColumn(1)
 
-    nc_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
+//     nc_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
-        if(rowNumber < 5) return
-        nat_catGtins.push(c.value)
+//         if(rowNumber < 5) return
+//         nat_catGtins.push(c.value)
 
-    })
+//     })
 
-    const nc_c2 = nc_ws.getColumn(2)
+//     const nc_c2 = nc_ws.getColumn(2)
 
-    nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
+//     nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
-        if(rowNumber < 5) return
-        nat_catNames.push(c.value.trim())
+//         if(rowNumber < 5) return
+//         nat_catNames.push(c.value.trim())
 
-    })
+//     })
 
-    for(let i = 0; i < nat_catNames.length; i++) {
+//     for(let i = 0; i < nat_catNames.length; i++) {
 
-        nat_cat.push({
-            'gtin': nat_catGtins[i],
-            'name': nat_catNames[i]
-        })
+//         nat_cat.push({
+//             'gtin': nat_catGtins[i],
+//             'name': nat_catNames[i]
+//         })
 
-    }
+//     }
 
-    let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+//     let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
         
-        'dir': 'asc',
-        'filter': {
-            'since':'2025-01-01T01:00:00.000Z',
-            'status':'awaiting_packaging',
-            'to':'2025-12-31T23:59:59.000Z'
-        },
-        'limit': 1000,
-        'offset':0
+//         'dir': 'asc',
+//         'filter': {
+//             'since':'2025-01-01T01:00:00.000Z',
+//             'status':'awaiting_packaging',
+//             'to':'2025-12-31T23:59:59.000Z'
+//         },
+//         'limit': 1000,
+//         'offset':0
 
-    }, {
+//     }, {
 
-        headers: {
-            'Host':'api-seller.ozon.ru',
-            'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-            'Api-Key':`${process.env.OZON_API_KEY}`,
-            'Content-Type':'application/json'
-        }
+//         headers: {
+//             'Host':'api-seller.ozon.ru',
+//             'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+//             'Api-Key':`${process.env.OZON_API_KEY}`,
+//             'Content-Type':'application/json'
+//         }
 
-    })
+//     })
 
-    const result = response.data.result.postings
+//     const result = response.data.result.postings
 
-    result.forEach(el => {
+//     result.forEach(el => {
 
-        for(let i = 0; i < el.products.length; i++) {
+//         for(let i = 0; i < el.products.length; i++) {
 
-            // console.log(el.products[i].offer_id)
-            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) >= 0) {
+//             // console.log(el.products[i].offer_id)
+//             if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) >= 0) {
 
-                oz_orders.find(o => o.vendor === el.products[i].offer_id).quantity += Number(el.products[i].quantity)
+//                 oz_orders.find(o => o.vendor === el.products[i].offer_id).quantity += Number(el.products[i].quantity)
 
-            }
+//             }
 
-            // console.log(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id))
+//             // console.log(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id))
 
-            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
+//             if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
 
-                oz_orders.push({
-                    'name': el.products[i].name,
-                    'vendor': el.products[i].offer_id,
-                    'quantity': Number(el.products[i].quantity)
-                })
+//                 oz_orders.push({
+//                     'name': el.products[i].name,
+//                     'vendor': el.products[i].offer_id,
+//                     'quantity': Number(el.products[i].quantity)
+//                 })
 
-            }
+//             }
 
-        }
-    })
+//         }
+//     })
 
-    oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
+//     oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
 
-    for(let i = 0; i < oz_orders.length; i++) {
+//     for(let i = 0; i < oz_orders.length; i++) {
 
-        const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+//         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
-            "filter": {
-                "offer_id": [
-                    oz_orders[i].vendor
-                ],
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
+//             "filter": {
+//                 "offer_id": [
+//                     oz_orders[i].vendor
+//                 ],
+//                 "visibility": "ALL"
+//             },
+//             "limit": 1000,
+//             "sort_dir": "ASC"
 
-        }, {
-            headers: {
-                'Host':'api-seller.ozon.ru',
-                'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-                'Api-Key':`${process.env.OZON_API_KEY}`,
-                'Content-Type':'application/json'
-            }
-        })
+//         }, {
+//             headers: {
+//                 'Host':'api-seller.ozon.ru',
+//                 'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+//                 'Api-Key':`${process.env.OZON_API_KEY}`,
+//                 'Content-Type':'application/json'
+//             }
+//         })
 
-        if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
+//         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
-            names.push({            
-                'vendor': oz_orders[i].vendor,
-                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                .trim()                  // убрать пробелы по краям
-                                                .replace(/\s+/g, ' '),
-                'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
-                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-            })   
+//             names.push({            
+//                 'vendor': oz_orders[i].vendor,
+//                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                 .trim()                  // убрать пробелы по краям
+//                                                 .replace(/\s+/g, ' '),
+//                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
+//                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                 'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+//             })   
 
-        }
+//         }
 
-        if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+//         if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-            if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+//             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                names.push({            
-                    'vendor': oz_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-                })
+//                 names.push({            
+//                     'vendor': oz_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+//                 })
 
-            }
+//             }
 
-            if(response.data.result[0].name.indexOf('на резинке') < 0) {
+//             if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                names.push({            
-                    'vendor': oz_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПРОСТЫНЯ'
-                })
+//                 names.push({            
+//                     'vendor': oz_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'ПРОСТЫНЯ'
+//                 })
 
-            }
+//             }
 
-        }
+//         }
 
-        if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+//         if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-            if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
+//             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
-                names.push({
-                    'vendor': oz_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-                })
+//                 names.push({
+//                     'vendor': oz_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+//                 })
 
-            } else {
+//             } else {
 
-                names.push({
-                    'vendor': oz_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
-                })
+//                 names.push({
+//                     'vendor': oz_orders[i].vendor,
+//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                     .trim()                  // убрать пробелы по краям
+//                                                     .replace(/\s+/g, ' '),
+//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                     'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+//                 })
 
-            }
+//             }
 
-        }
+//         }
 
-        if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
+//         if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
 
-            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
-                        names.push({
-                            'vendor': oz_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': oz_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
-                        names.push({
-                            'vendor': oz_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': oz_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
-                        names.push({
-                            'vendor': oz_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': oz_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                }
+//                 }
 
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                    names.push({
-                        'vendor': oz_orders[i].vendor,
-                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                        .trim()                  // убрать пробелы по краям
-                                                        .replace(/\s+/g, ' '),
-                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
-                    })
+//                     names.push({
+//                         'vendor': oz_orders[i].vendor,
+//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                         .trim()                  // убрать пробелы по краям
+//                                                         .replace(/\s+/g, ' '),
+//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                         'productType': 'КОМПЛЕКТ'
+//                     })
 
-                }
+//                 }
 
-            }
+//             }
 
-            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
-                        names.push({
-                            'vendor': oz_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': oz_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
-                        names.push({
-                            'vendor': oz_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': oz_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                    if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+//                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
-                        names.push({
-                            'vendor': oz_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
-                        })
+//                         names.push({
+//                             'vendor': oz_orders[i].vendor,
+//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                             .trim()                  // убрать пробелы по краям
+//                                                             .replace(/\s+/g, ' '),
+//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                             'productType': 'КОМПЛЕКТ'
+//                         })
 
-                    }
+//                     }
 
-                }
+//                 }
 
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                    names.push({
-                        'vendor': oz_orders[i].vendor,
-                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                        .trim()                  // убрать пробелы по краям
-                                                        .replace(/\s+/g, ' '),
-                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
-                    })
+//                     names.push({
+//                         'vendor': oz_orders[i].vendor,
+//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+//                                                         .trim()                  // убрать пробелы по краям
+//                                                         .replace(/\s+/g, ' '),
+//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+//                         'productType': 'КОМПЛЕКТ'
+//                     })
 
-                }
+//                 }
 
-            }
+//             }
             
 
-        }
+//         }
 
-    }
+//     }
 
-    names.forEach(el => {
+//     names.forEach(el => {
 
-            if(nat_cat.findIndex(o => o.name === el.name) < 0) {
-                new_items.push(el.name)
-            }
+//             if(nat_cat.findIndex(o => o.name === el.name) < 0) {
+//                 new_items.push(el.name)
+//             }
 
-            if(nat_cat.findIndex(o => o.name === el.name) >= 0) {
-                current_items.push(el.name)
-            }
+//             if(nat_cat.findIndex(o => o.name === el.name) >= 0) {
+//                 current_items.push(el.name)
+//             }
 
-    })
+//     })
 
-    html += `<section class="table">
-                <div class="marks-table">
-                    <div class="marks-table-header">
-                        <div class="header-cell">Наименование</div>
-                        <div class="header-cell">Статус</div>                            
-                    </div>
-                <div class="header-wrapper"></div>`
+//     html += `<section class="table">
+//                 <div class="marks-table">
+//                     <div class="marks-table-header">
+//                         <div class="header-cell">Наименование</div>
+//                         <div class="header-cell">Статус</div>                            
+//                     </div>
+//                 <div class="header-wrapper"></div>`
 
-    names.forEach(elem => {
-        if(new_items.indexOf(elem.name) >= 0) {
-            html += `<div class="table-row">
-                        <span id="name">${elem.name}</span>
-                        <span id="status-new">Новый товар</span>
-                     </div>`
-        } else {
-            html += `<div class="table-row">
-                        <span id="name">${elem.name}</span>
-                        <span id="status-current">Актуальный товар</span>
-                     </div>`
-        }
-    })
+//     names.forEach(elem => {
+//         if(new_items.indexOf(elem.name) >= 0) {
+//             html += `<div class="table-row">
+//                         <span id="name">${elem.name}</span>
+//                         <span id="status-new">Новый товар</span>
+//                      </div>`
+//         } else {
+//             html += `<div class="table-row">
+//                         <span id="name">${elem.name}</span>
+//                         <span id="status-current">Актуальный товар</span>
+//                      </div>`
+//         }
+//     })
 
-    html += `</section>
-             <section class="action-form">
-                <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
-             </section>
-             <div class="body-wrapper"></div>                        
-             ${footerComponent}`
+//     html += `</section>
+//              <section class="action-form">
+//                 <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
+//              </section>
+//              <div class="body-wrapper"></div>                        
+//              ${footerComponent}`
 
-    async function createImport(array) {
+//     async function createImport(array) {
 
-        const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
+//         const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
         
-        const wb = new exl.Workbook()
+//         const wb = new exl.Workbook()
 
-        await wb.xlsx.readFile(fileName)
+//         await wb.xlsx.readFile(fileName)
 
-        const ws = wb.getWorksheet('IMPORT_TNVED_6302')
+//         const ws = wb.getWorksheet('IMPORT_TNVED_6302')
 
-        let cellNumber = 5
+//         let cellNumber = 5
 
-        for(let i = 0; i < array.length; i++) {
+//         for(let i = 0; i < array.length; i++) {
 
-            ws.getCell(`A${cellNumber}`).value = 6302
-            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
-            ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-            ws.getCell(`D${cellNumber}`).value = 'Артикул'
-            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
-            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
-            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
-            ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
+//             ws.getCell(`A${cellNumber}`).value = 6302
+//             ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
+//             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
+//             ws.getCell(`D${cellNumber}`).value = 'Артикул'
+//             ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
+//             ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
+//             ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
+//             ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
-            if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-            if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
-            if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+//             if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+//             if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
+//             if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
+//             if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
             
-            if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
+//             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
-            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
-            if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
+//             if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
+//             if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
-            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
-            ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-            ws.getCell(`N${cellNumber}`).value = 'На модерации'                
+//             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
+//             ws.getCell(`L${cellNumber}`).value = '6302100001'
+//             ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+//             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
-            cellNumber++
+//             cellNumber++
 
-        }
+//         }
 
-        ws.unMergeCells('D2')
+//         ws.unMergeCells('D2')
 
-        ws.getCell('E2').value = '13914'
+//         ws.getCell('E2').value = '13914'
 
-        ws.getCell('E2').fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor:{argb:'E3E3E3'}
-        }
+//         ws.getCell('E2').fill = {
+//             type: 'pattern',
+//             pattern: 'solid',
+//             fgColor:{argb:'E3E3E3'}
+//         }
 
-        ws.getCell('E2').font = {
-            size: 10,
-            name: 'Arial'
-        }
+//         ws.getCell('E2').font = {
+//             size: 10,
+//             name: 'Arial'
+//         }
 
-        ws.getCell('E2').alignment = {
-            horizontal: 'center',
-            vertical: 'bottom'
-        }        
+//         ws.getCell('E2').alignment = {
+//             horizontal: 'center',
+//             vertical: 'bottom'
+//         }        
 
-        const date_ob = new Date()
+//         const date_ob = new Date()
 
-        let month = date_ob.getMonth() + 1
+//         let month = date_ob.getMonth() + 1
 
-        let filePath = ''
+//         let filePath = ''
 
-        month < 10 ? filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon`
+//         month < 10 ? filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon`
 
-        fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
-            if(err) {
-                await wb.xlsx.writeFile(`${filePath}.xlsx`)
-            } else {
-                let count = 1
-                fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
-                    if(err) {
-                        await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
-                    } else {
-                        await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
-                    }
-                })
+//         fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
+//             if(err) {
+//                 await wb.xlsx.writeFile(`${filePath}.xlsx`)
+//             } else {
+//                 let count = 1
+//                 fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
+//                     if(err) {
+//                         await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
+//                     } else {
+//                         await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
+//                     }
+//                 })
                 
-            }
-        })
+//             }
+//         })
 
-    }
+//     }
 
-    if(new_items.length > 0) await createImport(new_items)
+//     if(new_items.length > 0) await createImport(new_items)
 
-    res.send(html)
+//     res.send(html)
 
-    // res.json({nat_cat, names, new_items})
+//     // res.json({nat_cat, names, new_items})
 
-})
-
-app.get('/orders_rework', async function (req, res) {
-
-    let oz_orders = []
-    const nat_cat = []
-    const gtins = []
-    let names = []
-
-    let html = `${headerComponent}
-                    <title>Заказ акутальных маркировок</title>
-                </head>
-                <body>
-                    ${navComponent}
-                        <section class="sub-nav import-main">
-                            <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            if(array[i] === 'yandex') {
-                address = 'yandex'
-                html += `<button class="button-import">
-                            <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
-                        </button>`
-            }
-
-            if(array[i] !== 'yandex') {
-                array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-                html += `<button class="button-import">
-                            <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                        </button>`
-            }
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
-
-    await renderImportButtons(buttons)
-    await renderMarkingButtons()
-
-    html += `</section>`
-
-    const wb = new exl.Workbook()
-    
-    const fileName = './public/Краткий отчет.xlsx'    
-
-    await wb.xlsx.readFile(fileName)
-        
-    const nc_ws = wb.getWorksheet('Краткий отчет')
-
-    const nc_c1 = nc_ws.getColumn(1)
-
-    nc_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
-
-        if(rowNumber < 5) return
-        gtins.push(c.value)
-
-    })
-
-    const nc_c2 = nc_ws.getColumn(2)
-
-    nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
-
-        if(rowNumber < 5) return
-        nat_cat.push(c.value.trim())
-
-    })
-
-    let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
-        
-        'dir': 'asc',
-        'filter': {
-            'since':'2025-01-01T01:00:00.000Z',
-            'status':'awaiting_packaging',
-            'to':'2025-12-31T23:59:59.000Z'
-        },
-        'limit': 1000,
-        'offset':0
-
-    }, {
-
-        headers: {
-
-            'Host':'api-seller.ozon.ru',
-            'Client-Id':'144225',
-            'Api-Key':'c139ba7b-611a-4447-870c-f85d8e4ad9f8',
-            'Content-Type':'application/json'
-
-        }
-
-    })
-
-    const result = response.data.result.postings
-
-    result.forEach(el => {
-
-        for(let i = 0; i < el.products.length; i++) {
-
-            // console.log(el.products[i].offer_id)
-            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) >= 0) {
-
-                oz_orders.find(o => o.vendor === el.products[i].offer_id).quantity += Number(el.products[i].quantity)
-
-            }
-
-            // console.log(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id))
-
-            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
-
-                oz_orders.push({
-                    'name': el.products[i].name,
-                    'vendor': el.products[i].offer_id,
-                    'quantity': Number(el.products[i].quantity)
-                })
-
-            }
-
-        }
-    })
-
-    oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
-
-    html += `<section class="table">
-                    <div class="marks-table">
-                        <div class="marks-table-header">
-                            <div class="header-cell">Наименование</div>
-                            <div class="header-cell">Статус</div>                            
-                        </div>
-                    <div class="header-wrapper"></div>`
-
-    for(let i = 0; i < oz_orders.length; i++) {
-        html += `<div class="table-row">
-                    <span id="name">${oz_orders[i].name}</span>
-                    <span id="status-current">Актуальный товар</span>
-                    <span id="quantity">${oz_orders[i].quantity}</span>
-                 </div>`
-    }
-
-    html += `</section>
-             <div class="body-wrapper"></div>                        
-             ${footerComponent}`
-
-    function createNameList() {
-
-        let orderList = []
-        let _temp = []
-
-        for (let i = 0; i < oz_orders.length; i++) {
-
-            if(nat_cat.indexOf(oz_orders[i].name) >= 0) {
-
-                _temp.push(oz_orders[i].name)
-
-            }            
-            
-            if(_temp.length%10 === 0) {
-                if(_temp.length !== 0) {
-                    orderList.push(_temp)
-                }
-                _temp = []
-            }
-
-        }        
-
-        if(_temp.length !== 0) {
-            orderList.push(_temp)
-        }
-        _temp = []
-
-        return orderList
-
-    }
-
-    function createQuantityList() {
-
-        let quantityList = []
-        let temp = []
-
-        for(let i = 0; i < oz_orders.length; i++) {
-
-            if(nat_cat.indexOf(oz_orders[i].name) >= 0) {
-
-                temp.push(oz_orders[i].quantity)
-
-            }            
-
-            if(temp.length%10 === 0) {
-                if(temp.length !== 0) {
-                    quantityList.splice(-1, 0, ...quantityList.splice(-1, 1, temp))
-                }
-                temp = []
-            }
-
-        }
-
-        if(temp.length !== 0) {
-
-            quantityList.splice(-1, 0, ...quantityList.splice(-1, 1, temp))
-
-        }
-
-        return quantityList
-
-    }
-
-    function createOrder() {
-
-        let List = createNameList()
-        let Quantity = createQuantityList()
-        let content = ``
-
-        for(let i = 0; i < List.length; i++) {
-            if(List[i].length > 0) {
-                content += `<?xml version="1.0" encoding="utf-8"?>
-                            <order xmlns="urn:oms.order" xsi:schemaLocation="urn:oms.order schema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                                <lp>
-                                    <productGroup>lp</productGroup>
-                                    <contactPerson>333</contactPerson>
-                                    <releaseMethodType>REMARK</releaseMethodType>
-                                    <createMethodType>SELF_MADE</createMethodType>
-                                    <productionOrderId>OZON</productionOrderId>
-                                    <products>`
-                
-                    for(let j = 0; j < List[i].length; j++) {                
-                        if(nat_cat.indexOf(List[i][j]) >= 0) {
-                            content += `<product>
-                                            <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
-                                            <quantity>${Quantity[i][j]}</quantity>
-                                            <serialNumberType>OPERATOR</serialNumberType>
-                                            <cisType>UNIT</cisType>
-                                            <templateId>10</templateId>
-                                        </product>`
-                        }
-                    }
-
-                content += `    </products>
-                            </lp>
-                        </order>`
-
-            }
-
-            const date_ob = new Date()
-
-            let month = date_ob.getMonth() + 1
-
-            let filePath = ''
-
-            month < 10 ? filePath = `./public/orders/lp_ozon_${i}_${date_ob.getDate()}_0${month}.xml` : filePath = `./public/orders/lp_ozon_${i}_${date_ob.getDate()}_${month}.xml`
-
-            if(content !== ``) {
-                fs.writeFileSync(filePath, content)
-            }
-
-            content = ``
-
-        }   
-
-    }
-
-    createOrder()
-
-    res.send(html)
-
-})
+// })
 
 app.listen(3030)
