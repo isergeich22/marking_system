@@ -1,47 +1,18 @@
 const express = require('express')
 const exl = require('exceljs')
 const fs = require('fs')
-const cio = require('cheerio')
 const fetch = require('node-fetch')
 const axios = require('axios')
 const dotenv = require('dotenv')
-const path = require('path')
-const { title } = require('process')
+const { headerComponent, navComponent, footerComponent } = require('./components/htmlComponents')
 const app = express()
+
+let html = ``
 
 dotenv.config({path:__dirname + '/.env'})
 
 const dbsId = process.env.YANDEX_DBS_ID
 const fbsId = process.env.YANDEX_FBS_ID
-
-const headerComponent = `<!DOCTYPE html>
-                            <html lang="en">
-                            <head>
-                                <meta charset="UTF-8">
-                                <meta http-equiv="X-UA-Compatible" content="IE=edge">
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <link rel="stylesheet" href="/css/styles.css" type="text/css">
-                                <link rel="shortcut icon" type="image/png" href="/favicon.png">`
-
-const navComponent = `<header class="header">
-                        <nav>
-                            <img src="/img/chestnyj_znak.png" alt="честный знак">
-                            <p class="nav-item" id="home"><a href="http://localhost:3030/home">Главная</a></p>
-                            <p class="nav-item" id="import">Создание импорт-файлов</p>
-                            <p class="nav-item" id="cis_actions">Действия с КИЗ</p>                        
-                        </nav>                    
-                    </header>`
-
-const footerComponent = `   <button id="top" class="button-top">
-                            <svg width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <g clip-path="url(#ArrowLongUp_large_svg__clip0_35331_5070)">
-                                    <path d="M12 2v20m0-20l7 6.364M12 2L5 8.364" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                </g><defs><clipPath id="ArrowLongUp_large_svg__clip0_35331_5070"><path fill="#fff" transform="rotate(90 12 12)" d="M0 0h24v24H0z">
-                                </path></clipPath></defs></svg>
-                            </button>    
-                            <script src="/script.js"></script>
-                            </body>
-                        </html>`
 
 function compareStrings(str1, str2) {
 
@@ -59,49 +30,70 @@ function compareStrings(str1, str2) {
 
 }
 
-let buttons = ['ozon', 'wb', 'yandex']
+async function renderImportButtons(array) {
+
+    let address = ''
+
+    for(let i = 0; i < array.length; i++) {                
+        
+        if(array[i] === 'stocks') {
+
+            html += `<button class="button-import">
+                        <a href="http://localhost:3030/test_features" target="_blank">Создать импорт для остатков</a>
+                    </button>`
+
+        }
+
+        if(array[i] === 'wb') {
+
+            html += `<button class="button-import">
+                        <a href="http://localhost:3030/wildberries" target="_blank">Создать импорт для ${array[i]}</a>
+                    </button>`
+
+        }
+
+        if(array[i] !== 'wb' && array[i] !== 'stocks') {
+            html += `<button class="button-import">
+                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
+                    </button>`
+        }
+        
+    }
+
+    html += `   </div>`
+
+}
+
+async function renderMarkingButtons() {
+    html += `<div class="marking-control">
+                <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
+                <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+                <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+                <button class="marking-button distance-button"><a href="http://localhost:3030/wildberries/set_marks" target="_blank">Подстановка маркировки (Wildberries)</a></button>
+            </div>`
+}
+
+async function renderOtherButtons() {
+
+    html += `<div class="other-control">
+                <button class="other-button mark-stocks"><a href="http://localhost:3030/input_remarking" target="_blank">Cформировать импорт по остаткам</a></button>
+            </div>`
+
+}
+
+let buttons = ['ozon', 'wb', 'yandex', 'stocks']
 
 app.use(express.static(__dirname + '/public'))
 
 app.get('/home', async function(req, res){
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Главная</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота OZON (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота WILDBERRIES (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -338,43 +330,13 @@ app.get('/home', async function(req, res){
 
 app.get('/home/:status/', async function(req, res){
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Главная</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -674,43 +636,13 @@ app.get('/home/:status/', async function(req, res){
 })
 
 app.get('/filter', async function(req, res) {
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Главная</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -937,38 +869,13 @@ app.get('/ozon', async function(req, res){
     const current_items = []
     const names = []
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Импорт - OZON</title>
                 </head>
                 <body>
                         ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -1450,38 +1357,13 @@ app.get('/ozon_marks_order', async function(req, res){
     const gtins = []
     let names = []
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Заказ маркировки - OZON</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -1718,38 +1600,13 @@ app.get('/wildberries', async function(req, res){
     const nat_cat = []
     let names = []
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Импорт - WILDBERRIES</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -2195,38 +2052,13 @@ app.get('/wildberries_marks_order', async function(req, res) {
     const gtins = []
     let names = []
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Заказ маркировки - WILDBERRIES</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -2468,38 +2300,13 @@ app.get('/yandex', async function(req, res){
     const current_items = []
     let names = []
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Импорт - Я.Маркет</title>
                 </head>
                 <body>
                         ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -3005,38 +2812,13 @@ app.get('/yandex_marks_order', async function (req, res){
     const gtins = []
     let names = []
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Заказ маркировки - Я.Маркет</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -3314,43 +3096,13 @@ app.get('/yandex_marks_order', async function (req, res){
 
 app.get('/input_remarking', async function(req, res){
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Перемаркировка</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -3442,43 +3194,13 @@ app.get('/sale_ozon', async function(req, res){
 
     const actualMarksFile = './public/actual_marks.xlsx'
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Перемаркировка</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -3738,43 +3460,13 @@ app.get('/sale_ozon', async function(req, res){
 
 app.get('/sale_wb', async function(req, res){
 
-    let html = `${headerComponent}
+    html = `${headerComponent}
                     <title>Перемаркировка</title>
                 </head>
                 <body>
                     ${navComponent}
                         <section class="sub-nav import-main">
                             <div class="import-control">`
-    
-    // let url = window.location.href
-    // let str = url.split('/').reverse()[1]
-
-    // document.title = str
-
-    async function renderImportButtons(array) {
-
-        let address = ''
-
-        for(let i = 0; i < array.length; i++) {                
-            
-            array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-            html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-                    </button>`
-            
-        }
-
-        html += `   </div>`
-
-    }
-
-    async function renderMarkingButtons() {
-        html += `<div class="marking-control">
-                    <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                    <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-                 </div>`
-    }
 
     await renderImportButtons(buttons)
     await renderMarkingButtons()
@@ -4022,6 +3714,19 @@ app.get('/test_features', async function(req, res){
     const full_matches = []
     const names = []
 
+    html = `${headerComponent}
+                    <title>Маркировка остатков склада</title>
+                </head>
+                <body>
+                    ${navComponent}
+                        <section class="sub-nav import-main">
+                            <div class="import-control">`
+
+    await renderImportButtons(buttons)
+    await renderMarkingButtons()
+
+    html += `</section>`
+
     const wb = new exl.Workbook()
 
     const hsFile = './public/Краткий отчет.xlsx'
@@ -4189,7 +3894,6 @@ app.get('/test_features', async function(req, res){
 
         if(nat_cat.findIndex(i => i.name === o.name) < 0) {
 
-            console.log(o)
             return o
 
         }
@@ -4484,8 +4188,6 @@ app.get('/test_features', async function(req, res){
 
         for(let i = 0; i < array.length; i++) {
 
-            console.log(array[i])
-
             ws.getCell(`A${cellNumber}`).value = 6302
             ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
@@ -4583,11 +4285,42 @@ app.get('/test_features', async function(req, res){
 
     }
 
-    console.log(full_difference.length)
-
     await createImport(new_items)
 
     await createReport(errorCodes)
+
+    html += `<section class="table">
+                <div class="marks-table">
+                    <div class="marks-table-header">
+                        <div class="header-cell">Наименование</div>
+                        <div class="header-cell">Артикул</div>
+                        <div class="header-cell">Статус</div>                            
+                    </div>
+                <div class="header-wrapper"></div>`
+
+    for(let i = 0; i < full_difference.length; i++) {
+
+        html += `<div class="table-row">
+                    <span id="name">${full_difference[i].name}</span>
+                    <span id="vendor">${full_difference[i].vendor}</span>
+                    <span id="status-new">Новый</span>
+                </div>`
+
+    }
+
+    for(let i = 0; i < full_matches.length; i++) {
+
+        html += `<div class="table-row">
+                    <span id="name">${full_matches[i].name}</span>
+                    <span id="vendor">${full_matches[i].vendor}</span>
+                    <span id="status-current">Актуальный</span>
+                </div>`
+
+    }
+
+    html += `</section>
+             <div class="body-wrapper"></div>                        
+             ${footerComponent}`
 
     // for(let i = 0; i < nc_difference.length; i++) {
 
@@ -4599,7 +4332,9 @@ app.get('/test_features', async function(req, res){
 
     // }
 
-    res.json(new_items)
+    // res.json({full_difference, full_matches})
+
+    res.send(html)
 
 })
 
@@ -5407,6 +5142,19 @@ app.get('/wildberries/set_marks', async function (req, res){
     const orderNumbers = []
     const orderCodes = []
     const marksOrderNumbers = []
+    
+    html = `${headerComponent}
+                    <title>Подстановка маркировки Wildberries</title>
+                </head>
+                <body>
+                        ${navComponent}
+                        <section class="sub-nav import-main">
+                            <div class="import-control">`
+
+    await renderImportButtons(buttons)
+    await renderMarkingButtons()
+
+    html += `</section>`
 
     const marksFile = './public/wildberries/marks.xlsx'
     const ozonFile = './public/products.xlsx'
@@ -5431,8 +5179,6 @@ app.get('/wildberries/set_marks', async function (req, res){
         orderNumbers.push(c.value)
 
     })
-
-    console.log(orderCodes)
 
     w_c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
@@ -5547,12 +5293,6 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    // console.log(response.data.result[0].attributes.find(item => item.id === 6773))
-    // console.log(response.data.result[0].attributes.find(item => item.id === 6771))
-    // console.log(response.data.result[0].attributes.find(item => item.id === 6772))
-
-    // const size = `Пододеяльник: ${response.data.result[0].attributes.find(item => item.id === 6773).values[0].value}см; Простыня: ${response.data.result[0].attributes.find(item => item.id === 6771).values[0].value}см; Наволочка: ${response.data.result[0].attributes.find(item => item.id === 6772).values[0].value}см`
-
     let _temp = []
 
     wbOrder.forEach(el => {
@@ -5622,8 +5362,6 @@ app.get('/wildberries/set_marks', async function (req, res){
 
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
 
-        console.log(gtin)
-
         const mark = marks.find(o => o.gtin === gtin && o.status === 'not_used').mark
 
         if(mark) {
@@ -5636,6 +5374,31 @@ app.get('/wildberries/set_marks', async function (req, res){
         }
 
     }
+
+    html += `<section class="table">
+                <div class="marks-table">
+                    <div class="marks-table-header">
+                        <div class="header-cell">Номер заказа WB</div>
+                        <div class="header-cell">Наименование</div>
+                        <div class="header-cell">Артикул</div>
+                        <div class="header-cell">Код маркировки</div>
+                    </div>
+                <div class="header-wrapper"></div>`
+
+    for(let i = 0; i < wbOrder.length; i++) {
+
+        html += `<div class="table-row">
+                    <span id="order">${wbOrder[i].orderNumber}</span>
+                    <span id="product">${wbOrder[i].orderProduct}</span>
+                    <span id="vendor">${wbOrder[i].orderCode}</span>
+                    <span id="mark">${wbOrder[i].mark.replace(/\u003C/g, '&lt').replace(/\u003E/g, '&gt').replace(/\"/g, '&quot')}</span>
+                </div>`
+
+    }
+
+    html += `</section>
+             <div class="body-wrapper"></div>                        
+             ${footerComponent}`
 
     const wb_1 = new exl.Workbook()
 
@@ -5662,1023 +5425,10 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     await wb_1.xlsx.writeFile(`marks_template_completed.xlsx`)
 
-    res.json({wbOrder, marks, marksOrderNumbers})
+    res.send(html)
+
+    // res.json({wbOrder, marks, marksOrderNumbers})
     
 })
-
-// app.get('/test_wb', async function (req, res){
-
-//     const new_items = []
-//     const current_items = []
-//     const moderation_items = []
-//     const wb_orders = []
-//     const nat_cat = []
-//     let names = []
-
-//     let html = `${headerComponent}
-//                     <title>Импорт - WILDBERRIES</title>
-//                 </head>
-//                 <body>
-//                     ${navComponent}
-//                         <section class="sub-nav import-main">
-//                             <div class="import-control">`
-
-//     async function renderImportButtons(array) {
-
-//         let address = ''
-
-//         for(let i = 0; i < array.length; i++) {                
-//             if(array[i] === 'yandex') {
-//                 address = 'yandex'
-//                 html += `<button class="button-import">
-//                             <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
-//                         </button>`
-//             }
-
-//             if(array[i] !== 'yandex') {
-//                 array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-//                 html += `<button class="button-import">
-//                             <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-//                         </button>`
-//             }
-            
-//         }
-
-//         html += `   </div>`
-
-//     }
-
-//     async function renderMarkingButtons() {
-//         html += `<div class="marking-control">
-//                     <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-//                  </div>`
-//     }
-
-//     await renderImportButtons(buttons)
-//     await renderMarkingButtons()
-
-//     html += `</section>`
-
-//     const wb = new exl.Workbook()
-
-//     const hsFile = './public/Краткий отчет.xlsx'
-//     const wbFile = './public/wildberries/new.xlsx'
-
-//     await wb.xlsx.readFile(hsFile)
-        
-//     const ws = wb.getWorksheet('Краткий отчет')
-
-//     const c2 = ws.getColumn(2)
-
-//     c2.eachCell(c => {
-//         nat_cat.push(c.value)
-//     })
-
-//     await wb.xlsx.readFile(wbFile)
-
-//     const _ws = wb.getWorksheet('Сборочные задания')
-
-//     const c14 = _ws.getColumn(14)
-
-//     c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
-
-//         if(rowNumber < 2) return
-
-//         if(wb_orders.findIndex(o => o.vendor === c.value) >= 0) {
-
-//             wb_orders.find(o => o.vendor === c.value).quantity++
-
-//         }
-
-//         if(wb_orders.findIndex(o => o.vendor === c.value) < 0) {
-
-//             wb_orders.push({
-//                 'vendor': c.value,
-//                 'quantity': 1
-//             })
-
-//         }
-
-//     })
-
-//     for(let i = 0; i < wb_orders.length; i++) {
-
-//         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-                    
-//             "filter": {
-//                 "offer_id": [
-//                     wb_orders[i].vendor
-//                 ],
-//                 "visibility": "ALL"
-//             },
-//             "limit": 1000,
-//             "sort_dir": "ASC"
-
-//         }, {
-//             headers: {
-//                 'Host':'api-seller.ozon.ru',
-//                 'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-//                 'Api-Key':`${process.env.OZON_API_KEY}`,
-//                 'Content-Type':'application/json'
-//             }
-//         })
-
-//         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
-
-//             names.push({            
-//                 'vendor': wb_orders[i].vendor,
-//                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                 .trim()                  // убрать пробелы по краям
-//                                                 .replace(/\s+/g, ' '),
-//                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
-//                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                 'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-//             })   
-
-//         }
-
-//         if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
-
-//             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-//                 names.push({            
-//                     'vendor': wb_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-//                 })
-
-//             }
-
-//             if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-//                 names.push({            
-//                     'vendor': wb_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'ПРОСТЫНЯ'
-//                 })
-
-//             }
-
-//         }
-
-//         if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
-
-//             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
-
-//                 names.push({
-//                     'vendor': wb_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-//                 })
-
-//             } else {
-
-//                 names.push({
-//                     'vendor': wb_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
-//                 })
-
-//             }
-
-//         }
-
-//         if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
-
-//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
-
-//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': wb_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': wb_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': wb_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                 }
-
-//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-//                     names.push({
-//                         'vendor': wb_orders[i].vendor,
-//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                         .trim()                  // убрать пробелы по краям
-//                                                         .replace(/\s+/g, ' '),
-//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                         'productType': 'КОМПЛЕКТ'
-//                     })
-
-//                 }
-
-//             }
-
-//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
-
-//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': wb_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': wb_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': wb_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                 }
-
-//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-//                     names.push({
-//                         'vendor': wb_orders[i].vendor,
-//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                         .trim()                  // убрать пробелы по краям
-//                                                         .replace(/\s+/g, ' '),
-//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                         'productType': 'КОМПЛЕКТ'
-//                     })
-
-//                 }
-
-//             }
-            
-
-//         }
-
-//         names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0)
-
-//     }
-
-//     names.forEach(el => {
-
-//             if(nat_cat.indexOf(el.name) < 0) {
-//                 new_items.push(el.name)
-//             }
-
-//             if(nat_cat.indexOf(el.name) >= 0) {
-//                 current_items.push(el.name)
-//             }
-
-//     })
-
-//     html += `<section class="table">
-//                 <div class="marks-table">
-//                     <div class="marks-table-header">
-//                         <div class="header-cell">Наименование</div>
-//                         <div class="header-cell">Статус</div>                            
-//                     </div>
-//                 <div class="header-wrapper"></div>`
-
-//     names.forEach(elem => {
-//         if(new_items.indexOf(elem.name) >= 0) {
-//             html += `<div class="table-row">
-//                         <span id="name">${elem.name}</span>
-//                         <span id="status-new">Новый товар</span>
-//                      </div>`
-//         } else if(moderation_items.indexOf(elem.name) >= 0){
-//             html += `<div class="table-row">
-//                         <span id="name">${elem.name}</span>
-//                         <span id="status-moderation">На модерации</span>
-//                      </div>`        
-//         } else {
-//             html += `<div class="table-row">
-//                         <span id="name">${elem.name}</span>
-//                         <span id="status-current">Актуальный товар</span>
-//                      </div>`
-//         }
-//     })
-
-//     html += `</section>
-//              <section class="action-form">
-//                 <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
-//              </section>
-//              <div class="body-wrapper"></div>                        
-//              ${footerComponent}`
-
-//     async function createImport(array) {
-
-//         const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
-        
-//         const wb = new exl.Workbook()
-
-//         await wb.xlsx.readFile(fileName)
-
-//         const ws = wb.getWorksheet('IMPORT_TNVED_6302')
-
-//         let cellNumber = 5
-
-//         for(let i = 0; i < array.length; i++) {
-
-//             ws.getCell(`A${cellNumber}`).value = 6302
-//             ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
-//             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-//             ws.getCell(`D${cellNumber}`).value = 'Артикул'
-//             ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
-//             ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
-//             ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
-//             ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
-
-//             if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
-//             if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-//             if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
-//             if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
-            
-//             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
-
-//             if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
-//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
-//             if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
-
-//             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
-//             ws.getCell(`L${cellNumber}`).value = '6302100001'
-//             ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-//             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
-
-//             cellNumber++
-
-//         }
-
-//         ws.unMergeCells('D2')
-
-//         ws.getCell('E2').value = '13914'
-
-//         ws.getCell('E2').fill = {
-//             type: 'pattern',
-//             pattern: 'solid',
-//             fgColor:{argb:'E3E3E3'}
-//         }
-
-//         ws.getCell('E2').font = {
-//             size: 10,
-//             name: 'Arial'
-//         }
-
-//         ws.getCell('E2').alignment = {
-//             horizontal: 'center',
-//             vertical: 'bottom'
-//         }        
-
-//         const date_ob = new Date()
-
-//         let month = date_ob.getMonth() + 1
-
-//         let filePath = ''
-
-//         month < 10 ? filePath = `./public/wildberries/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_wildberries` : filePath = `./public/wildberries/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_wildberries`
-
-//         fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
-//             if(err) {
-//                 await wb.xlsx.writeFile(`${filePath}.xlsx`)
-//             } else {
-//                 let count = 1
-//                 fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
-//                     if(err) {
-//                         await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
-//                     } else {
-//                         await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
-//                     }
-//                 })
-                
-//             }
-//         })
-
-//     }
-
-//     if(new_items.length > 0) await createImport(new_items)
-
-//     res.send(html)
-
-//     // res.json({names, wb_orders, new_items})
-
-// })
-
-// app.get('/test_oz', async function (req, res){
-
-//     const nat_cat = []
-//     const nat_catGtins = []
-//     const nat_catNames = []
-//     let oz_orders = []
-//     const new_items = []
-//     const current_items = []
-//     const names = []
-
-//     let html = `${headerComponent}
-//                     <title>Импорт - OZON</title>
-//                 </head>
-//                 <body>
-//                         ${navComponent}
-//                         <section class="sub-nav import-main">
-//                             <div class="import-control">`
-
-//     async function renderImportButtons(array) {
-
-//         let address = ''
-
-//         for(let i = 0; i < array.length; i++) {                
-//             if(array[i] === 'yandex') {
-//                 address = 'yandex'
-//                 html += `<button class="button-import">
-//                             <a href="http://localhost:3030/${address}" target="_blank">Работа с ${array[i]}</a>
-//                         </button>`
-//             }
-
-//             if(array[i] !== 'yandex') {
-//                 array[i] === 'wb' ? address = 'wildberries' : address = array[i]
-//                 html += `<button class="button-import">
-//                             <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
-//                         </button>`
-//             }
-            
-//         }
-
-//         html += `   </div>`
-
-//     }
-
-//     async function renderMarkingButtons() {
-//         html += `<div class="marking-control">
-//                     <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
-//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-//                     <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
-//                  </div>`
-//     }
-
-//     await renderImportButtons(buttons)
-//     await renderMarkingButtons()
-
-//     html += `</section>`
-
-//     const wb = new exl.Workbook()
-
-//     await wb.xlsx.readFile('./public/Краткий отчет.xlsx')
-
-//     const nc_ws = wb.getWorksheet('Краткий отчет')
-
-//     const nc_c1 = nc_ws.getColumn(1)
-
-//     nc_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
-
-//         if(rowNumber < 5) return
-//         nat_catGtins.push(c.value)
-
-//     })
-
-//     const nc_c2 = nc_ws.getColumn(2)
-
-//     nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
-
-//         if(rowNumber < 5) return
-//         nat_catNames.push(c.value.trim())
-
-//     })
-
-//     for(let i = 0; i < nat_catNames.length; i++) {
-
-//         nat_cat.push({
-//             'gtin': nat_catGtins[i],
-//             'name': nat_catNames[i]
-//         })
-
-//     }
-
-//     let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
-        
-//         'dir': 'asc',
-//         'filter': {
-//             'since':'2025-01-01T01:00:00.000Z',
-//             'status':'awaiting_packaging',
-//             'to':'2025-12-31T23:59:59.000Z'
-//         },
-//         'limit': 1000,
-//         'offset':0
-
-//     }, {
-
-//         headers: {
-//             'Host':'api-seller.ozon.ru',
-//             'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-//             'Api-Key':`${process.env.OZON_API_KEY}`,
-//             'Content-Type':'application/json'
-//         }
-
-//     })
-
-//     const result = response.data.result.postings
-
-//     result.forEach(el => {
-
-//         for(let i = 0; i < el.products.length; i++) {
-
-//             // console.log(el.products[i].offer_id)
-//             if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) >= 0) {
-
-//                 oz_orders.find(o => o.vendor === el.products[i].offer_id).quantity += Number(el.products[i].quantity)
-
-//             }
-
-//             // console.log(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id))
-
-//             if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
-
-//                 oz_orders.push({
-//                     'name': el.products[i].name,
-//                     'vendor': el.products[i].offer_id,
-//                     'quantity': Number(el.products[i].quantity)
-//                 })
-
-//             }
-
-//         }
-//     })
-
-//     oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
-
-//     for(let i = 0; i < oz_orders.length; i++) {
-
-//         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-                    
-//             "filter": {
-//                 "offer_id": [
-//                     oz_orders[i].vendor
-//                 ],
-//                 "visibility": "ALL"
-//             },
-//             "limit": 1000,
-//             "sort_dir": "ASC"
-
-//         }, {
-//             headers: {
-//                 'Host':'api-seller.ozon.ru',
-//                 'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-//                 'Api-Key':`${process.env.OZON_API_KEY}`,
-//                 'Content-Type':'application/json'
-//             }
-//         })
-
-//         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
-
-//             names.push({            
-//                 'vendor': oz_orders[i].vendor,
-//                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                 .trim()                  // убрать пробелы по краям
-//                                                 .replace(/\s+/g, ' '),
-//                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
-//                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                 'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
-//             })   
-
-//         }
-
-//         if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
-
-//             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-//                 names.push({            
-//                     'vendor': oz_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-//                 })
-
-//             }
-
-//             if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-//                 names.push({            
-//                     'vendor': oz_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'ПРОСТЫНЯ'
-//                 })
-
-//             }
-
-//         }
-
-//         if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
-
-//             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
-
-//                 names.push({
-//                     'vendor': oz_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
-//                 })
-
-//             } else {
-
-//                 names.push({
-//                     'vendor': oz_orders[i].vendor,
-//                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                     .trim()                  // убрать пробелы по краям
-//                                                     .replace(/\s+/g, ' '),
-//                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-//                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                     'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
-//                 })
-
-//             }
-
-//         }
-
-//         if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
-
-//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
-
-//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': oz_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': oz_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': oz_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                 }
-
-//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-//                     names.push({
-//                         'vendor': oz_orders[i].vendor,
-//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                         .trim()                  // убрать пробелы по краям
-//                                                         .replace(/\s+/g, ' '),
-//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                         'productType': 'КОМПЛЕКТ'
-//                     })
-
-//                 }
-
-//             }
-
-//             if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
-
-//                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-//                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': oz_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': oz_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
-
-//                         names.push({
-//                             'vendor': oz_orders[i].vendor,
-//                             'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                             .trim()                  // убрать пробелы по краям
-//                                                             .replace(/\s+/g, ' '),
-//                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                             'productType': 'КОМПЛЕКТ'
-//                         })
-
-//                     }
-
-//                 }
-
-//                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-//                     names.push({
-//                         'vendor': oz_orders[i].vendor,
-//                         'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-//                                                         .trim()                  // убрать пробелы по краям
-//                                                         .replace(/\s+/g, ' '),
-//                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-//                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-//                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-//                         'productType': 'КОМПЛЕКТ'
-//                     })
-
-//                 }
-
-//             }
-            
-
-//         }
-
-//     }
-
-//     names.forEach(el => {
-
-//             if(nat_cat.findIndex(o => o.name === el.name) < 0) {
-//                 new_items.push(el.name)
-//             }
-
-//             if(nat_cat.findIndex(o => o.name === el.name) >= 0) {
-//                 current_items.push(el.name)
-//             }
-
-//     })
-
-//     html += `<section class="table">
-//                 <div class="marks-table">
-//                     <div class="marks-table-header">
-//                         <div class="header-cell">Наименование</div>
-//                         <div class="header-cell">Статус</div>                            
-//                     </div>
-//                 <div class="header-wrapper"></div>`
-
-//     names.forEach(elem => {
-//         if(new_items.indexOf(elem.name) >= 0) {
-//             html += `<div class="table-row">
-//                         <span id="name">${elem.name}</span>
-//                         <span id="status-new">Новый товар</span>
-//                      </div>`
-//         } else {
-//             html += `<div class="table-row">
-//                         <span id="name">${elem.name}</span>
-//                         <span id="status-current">Актуальный товар</span>
-//                      </div>`
-//         }
-//     })
-
-//     html += `</section>
-//              <section class="action-form">
-//                 <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
-//              </section>
-//              <div class="body-wrapper"></div>                        
-//              ${footerComponent}`
-
-//     async function createImport(array) {
-
-//         const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
-        
-//         const wb = new exl.Workbook()
-
-//         await wb.xlsx.readFile(fileName)
-
-//         const ws = wb.getWorksheet('IMPORT_TNVED_6302')
-
-//         let cellNumber = 5
-
-//         for(let i = 0; i < array.length; i++) {
-
-//             ws.getCell(`A${cellNumber}`).value = 6302
-//             ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
-//             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-//             ws.getCell(`D${cellNumber}`).value = 'Артикул'
-//             ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
-//             ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
-//             ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
-//             ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
-
-//             if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
-//             if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-//             if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
-//             if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
-            
-//             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
-
-//             if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
-//             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
-//             if(names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
-
-//             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
-//             ws.getCell(`L${cellNumber}`).value = '6302100001'
-//             ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-//             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
-
-//             cellNumber++
-
-//         }
-
-//         ws.unMergeCells('D2')
-
-//         ws.getCell('E2').value = '13914'
-
-//         ws.getCell('E2').fill = {
-//             type: 'pattern',
-//             pattern: 'solid',
-//             fgColor:{argb:'E3E3E3'}
-//         }
-
-//         ws.getCell('E2').font = {
-//             size: 10,
-//             name: 'Arial'
-//         }
-
-//         ws.getCell('E2').alignment = {
-//             horizontal: 'center',
-//             vertical: 'bottom'
-//         }        
-
-//         const date_ob = new Date()
-
-//         let month = date_ob.getMonth() + 1
-
-//         let filePath = ''
-
-//         month < 10 ? filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/ozon/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon`
-
-//         fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
-//             if(err) {
-//                 await wb.xlsx.writeFile(`${filePath}.xlsx`)
-//             } else {
-//                 let count = 1
-//                 fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
-//                     if(err) {
-//                         await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
-//                     } else {
-//                         await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
-//                     }
-//                 })
-                
-//             }
-//         })
-
-//     }
-
-//     if(new_items.length > 0) await createImport(new_items)
-
-//     res.send(html)
-
-//     // res.json({nat_cat, names, new_items})
-
-// })
 
 app.listen(3030)

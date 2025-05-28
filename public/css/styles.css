@@ -85,7 +85,7 @@
             padding: 10px 15px;
         }
 
-.import-control, .marking-control {
+.import-control, .marking-control, .other-control {
     width: 60%;
     margin: 0 auto;
     display: flex;
@@ -96,12 +96,12 @@
     gap: 1%;
 }
 
-    .import-control, .marking-control {
+    .import-control, .marking-control, .other-control {
         display: none;
         width: 100%;
     }
 
-    .button-import, .marking-button {
+    .button-import, .marking-button, .other-button {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -114,7 +114,7 @@
         background: #fff;
     }
 
-        .button-import a, .marking-button a {
+        .button-import a, .marking-button a, .mark-stocks a {
             text-decoration: none;
             color: #457FD7
         }
@@ -124,6 +124,10 @@
         }
 
         .marking-button a:visited {
+            color: #457FD7
+        }
+
+        .mark-stocks a:visited {
             color: #457FD7
         }
 

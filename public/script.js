@@ -1,12 +1,14 @@
 const home_button = document.querySelector('#home')
 const import_button = document.querySelector('#import')
 const cis_actions_button = document.querySelector('#cis_actions')
+const other_actions_button = document.querySelector('#other_actions')
 const import_control = document.querySelector('.import-control')
 const marking_control = document.querySelector('.marking-control')
+const other_control = document.querySelector('.other-control')
 const nav_items = document.querySelectorAll('.nav-item')
 
 home_button.addEventListener('click', () => {
-    [import_control.style.display, marking_control.style.display] = ['none', 'none']
+    [import_control.style.display, marking_control.style.display, other_control.style.display] = ['none', 'none', 'none']
     nav_items.forEach(el => {
         el.classList.remove('active')
     })
@@ -16,6 +18,7 @@ home_button.addEventListener('click', () => {
 import_button.addEventListener('click', () => {
     import_control.style.display = 'flex'
     marking_control.style.display = 'none'
+    other_control.style.display = 'none'
     nav_items.forEach(el => {
         el.classList.remove('active')
     })
@@ -25,10 +28,23 @@ import_button.addEventListener('click', () => {
 cis_actions_button.addEventListener('click', () => {
     marking_control.style.display = 'flex'
     import_control.style.display = 'none'
+    other_control.style.display = 'none'
     nav_items.forEach(el => {
         el.classList.remove('active')
     })
     cis_actions_button.classList.add('active')
+})
+
+other_actions_button.addEventListener('click', () => {
+
+    other_control.style.display = 'flex'
+    marking_control.style.display = 'none'
+    import_control.style.display = 'none'
+    nav_items.forEach(el => {
+        el.classList.remove('active')
+    })
+    other_actions_button.classList.add('active')
+
 })
 
 const table_header = document.querySelector('.marks-table-header')
