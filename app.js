@@ -7,6 +7,7 @@ const dotenv = require('dotenv')
 const { headerComponent, navComponent, footerComponent } = require('./components/htmlComponents')
 const app = express()
 
+// Переменная для формирования html-разметки ответа
 let html = ``
 
 dotenv.config({path:__dirname + '/.env'})
