@@ -4329,18 +4329,6 @@ app.get('/test_features', async function(req, res){
 
     console.log(full_difference.length)
 
-    // for(let i = 0; i < nc_difference.length; i++) {
-
-    //     if(full_difference.findIndex(o => o.vendor === nc_difference[i].vendor) < 0) {
-
-    //         main_difference.push(nc_difference[i])
-
-    //     }
-
-    // }
-
-    // res.json({full_difference, full_matches})
-
     res.send(html)
 
 })
