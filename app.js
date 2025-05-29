@@ -33,8 +33,6 @@ function compareStrings(str1, str2) {
 
 async function renderImportButtons(array) {
 
-    let address = ''
-
     for(let i = 0; i < array.length; i++) {                
         
         if(array[i] === 'stocks') {
@@ -55,7 +53,7 @@ async function renderImportButtons(array) {
 
         if(array[i] !== 'wb' && array[i] !== 'stocks') {
             html += `<button class="button-import">
-                        <a href="http://localhost:3030/${address}" target="_blank">Создать импорт для ${array[i]}</a>
+                        <a href="http://localhost:3030/${array[i]}" target="_blank">Создать импорт для ${array[i]}</a>
                     </button>`
         }
         
