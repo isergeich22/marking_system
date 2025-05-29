@@ -3901,6 +3901,12 @@ app.get('/test_features', async function(req, res){
 
     full_difference = full_difference.filter(o => o.name.indexOf('Наматрасник') < 0)
 
+    full_difference = full_difference.filter(o => {
+
+        if(nat_cat.findIndex(i => i.name === o.name)) return o
+
+    })
+
     for(let i = 0; i < full_difference.length; i++) {
 
         try {
@@ -4284,9 +4290,9 @@ app.get('/test_features', async function(req, res){
 
     }
 
-    await createImport(new_items)
+    // await createImport(new_items)
 
-    await createReport(errorCodes)
+    // await createReport(errorCodes)
 
     html += `<section class="table">
                 <div class="marks-table">
@@ -4320,6 +4326,8 @@ app.get('/test_features', async function(req, res){
     html += `</section>
              <div class="body-wrapper"></div>                        
              ${footerComponent}`
+
+    console.log(full_difference.length)
 
     // for(let i = 0; i < nc_difference.length; i++) {
 
