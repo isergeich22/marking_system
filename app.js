@@ -3791,7 +3791,9 @@ app.get('/test_features', async function(req, res){
 
     })
 
-    for(let i = 0; i < wh_prod.length; i++) {
+    for(let i = 0; i < wh_code.length; i++) {
+
+        let response = await axios.post('')
 
         wh.push({
             'name': wh_prod[i].replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
@@ -3807,6 +3809,50 @@ app.get('/test_features', async function(req, res){
         if(nat_cat[i].name.indexOf('- Р ') >= 0) {
 
             nat_cat[i].name = nat_cat[i].name.replace('- Р ', '')
+
+        }
+
+    }
+
+    for(let i = 0; i < wh.length; i++) {
+
+        if(wh[i].name.indexOf('из') >= 0) {
+
+            if(wh[i].name.indexOf('поплина') >= 0) {
+
+                wh[i].name = wh[i].name.replace('из поплина', 'поплин')
+
+            }
+
+            if(wh[i].name.indexOf('сатина') >= 0) {
+
+                wh[i].name = wh[i].name.replace('из сатина', 'сатин')
+
+            }
+
+            if(wh[i].name.indexOf('бязи') >= 0) {
+
+                wh[i].name = wh[i].name.replace('из бязи', 'бязь')
+
+            }
+
+            if(wh[i].name.indexOf('страйп-сатина') >= 0) {
+
+                wh[i].name = wh[i].name.replace('из страйп-сатина', 'страйп-сатин')
+
+            }
+
+            if(wh[i].name.indexOf('страйп сатина') >= 0) {
+
+                wh[i].name = wh[i].name.replace('из страйп сатина', 'страйп сатин')
+
+            }
+
+            if(wh[i].name.indexOf('тенселя') >= 0) {
+
+                wh[i].name = wh[i].name.replace('из тенселя', 'тенсель')
+
+            }
 
         }
 
@@ -3875,7 +3921,7 @@ app.get('/test_features', async function(req, res){
 
     for(let i = 0; i < wh.length; i++) {
 
-        if(full_cat.findIndex(o => o.vendor === wh[i].vendor) < 0) {
+        if(full_cat.findIndex(o => o.vendor === wh[i].vendor && nat_cat.findIndex(o => o.name === wh[i].name)) < 0) {
 
             full_difference.push(wh[i])
 
@@ -4249,7 +4295,7 @@ app.get('/test_features', async function(req, res){
 
         let filePath = ''
 
-        month < 10 ? filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon` : filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_ozon`
+        month < 10 ? filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}` : filePath = `./public/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}`
 
         fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
             if(err) {
@@ -4290,9 +4336,9 @@ app.get('/test_features', async function(req, res){
 
     }
 
-    // await createImport(new_items)
+    await createImport(new_items)
 
-    // await createReport(errorCodes)
+    await createReport(errorCodes)
 
     html += `<section class="table">
                 <div class="marks-table">
@@ -4327,7 +4373,7 @@ app.get('/test_features', async function(req, res){
              <div class="body-wrapper"></div>                        
              ${footerComponent}`
 
-    console.log(full_difference.length)
+    console.log(new_items.length)
 
     res.send(html)
 
