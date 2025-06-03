@@ -1552,7 +1552,7 @@ app.get('/ozon_marks_order', async function(req, res){
                                     <contactPerson>333</contactPerson>
                                     <releaseMethodType>REMARK</releaseMethodType>
                                     <createMethodType>SELF_MADE</createMethodType>
-                                    <productionOrderId>OZON</productionOrderId>
+                                    <productionOrderId>OZON_${i+1}</productionOrderId>
                                     <products>`
                 
                     for(let j = 0; j < List[i].length; j++) {                
@@ -3390,7 +3390,7 @@ app.get('/yandex_marks_order', async function (req, res){
                                     <contactPerson>333</contactPerson>
                                     <releaseMethodType>REMARK</releaseMethodType>
                                     <createMethodType>SELF_MADE</createMethodType>
-                                    <productionOrderId>YANDEX</productionOrderId>
+                                    <productionOrderId>YANDEX_${i+1}</productionOrderId>
                                     <products>`
                 
                     for(let j = 0; j < List[i].length; j++) {                
@@ -4709,7 +4709,7 @@ app.get('/test_features', async function(req, res){
         })
 
         for(let i = 24; i < products.length; i++) {
-            if(i%10 === 5 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
+            if(i%10 === 4 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
                 actual_products.push(products[i])
             }
         }
