@@ -2233,7 +2233,7 @@ app.get('/wildberries_marks_order', async function(req, res) {
                                     <contactPerson>333</contactPerson>
                                     <releaseMethodType>REMARK</releaseMethodType>
                                     <createMethodType>SELF_MADE</createMethodType>
-                                    <productionOrderId>WB</productionOrderId>
+                                    <productionOrderId>WB_${i+1}</productionOrderId>
                                     <products>`
                 
                     for(let j = 0; j < List[i].length; j++) {                
@@ -2424,7 +2424,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    wbOrder = wbOrder.filter(o => o.orderProduct.indexOf('Матрас') < 0 && o.orderProduct.indexOf('Подушка') < 0 && o.orderProduct.indexOf('Одеяло') < 0 && o.orderProduct.indexOf('Ветошь') < 0)
+    wbOrder = wbOrder.filter(o => o.orderProduct.indexOf('Матрас') < 0 && o.orderProduct.indexOf('Подушка') < 0 && o.orderProduct.indexOf('Одеяло') < 0 && o.orderProduct.indexOf('Ветошь') < 0 && o.orderProduct.indexOf('Наматра') < 0)
 
     await wb.xlsx.readFile(marksTemplateFile)
 
@@ -4709,7 +4709,7 @@ app.get('/test_features', async function(req, res){
         })
 
         for(let i = 24; i < products.length; i++) {
-            if(i%10 === 4 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
+            if(i%10 === 5 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
                 actual_products.push(products[i])
             }
         }
