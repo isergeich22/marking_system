@@ -2876,9 +2876,9 @@ app.get('/yandex', async function(req, res){
 
                         names.push({
                             'vendor': ya_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
+                                                            .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2891,9 +2891,9 @@ app.get('/yandex', async function(req, res){
 
                         names.push({
                             'vendor': ya_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
+                                                            .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2906,9 +2906,9 @@ app.get('/yandex', async function(req, res){
 
                         names.push({
                             'vendor': ya_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
+                                                            .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2923,9 +2923,9 @@ app.get('/yandex', async function(req, res){
 
                     names.push({
                         'vendor': ya_orders[i].vendor,
-                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                        .trim()                  // убрать пробелы по краям
-                                                        .replace(/\s+/g, ' '),
+                        'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2944,9 +2944,9 @@ app.get('/yandex', async function(req, res){
 
                         names.push({
                             'vendor': ya_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
+                                                            .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2959,9 +2959,9 @@ app.get('/yandex', async function(req, res){
 
                         names.push({
                             'vendor': ya_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
+                                                            .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2974,9 +2974,9 @@ app.get('/yandex', async function(req, res){
 
                         names.push({
                             'vendor': ya_orders[i].vendor,
-                            'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' '),
+                                                            .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -2991,9 +2991,9 @@ app.get('/yandex', async function(req, res){
 
                     names.push({
                         'vendor': ya_orders[i].vendor,
-                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                        .trim()                  // убрать пробелы по краям
-                                                        .replace(/\s+/g, ' '),
+                        'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                            .trim()                  // убрать пробелы по краям
+                                                            .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
@@ -4709,7 +4709,7 @@ app.get('/test_features', async function(req, res){
         })
 
         for(let i = 24; i < products.length; i++) {
-            if(i%10 === 4 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
+            if(i%10 === 5 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
                 actual_products.push(products[i])
             }
         }
