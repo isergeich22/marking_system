@@ -3232,15 +3232,31 @@ app.get('/yandex_marks_order', async function (req, res){
 
                             }
 
-                            if(ya_orders.findIndex(o => o.name === el.offerName) >= 0) {
+                            if(ya_orders.findIndex(o => o.name === el.offerName) < 0) {
 
-                                ya_orders.push({
+                                if(el.offerName.indexOf('белье') >= 0 || el.offerName.indexOf('бельё') >= 0) {
 
-                                    'name': el.offerName,
-                                    'vendor': el.offerId,
-                                    'quantity': el.count
+                                    ya_orders.push({
 
-                                })
+                                        'name': `КПБ ${el.offerName}`,
+                                        'vendor': el.offerId,
+                                        'quantity': el.count
+
+                                    })
+
+                                }
+
+                                if(el.offerName.indexOf('белье') < 0 && el.offerName.indexOf('бельё') < 0) {
+
+                                    ya_orders.push({
+
+                                        'name': el.offerName,
+                                        'vendor': el.offerId,
+                                        'quantity': el.count
+
+                                    })
+
+                                }
 
                             }
                         }
@@ -3271,13 +3287,29 @@ app.get('/yandex_marks_order', async function (req, res){
 
                             if(ya_orders.findIndex(o => o.name === el.offerName) < 0) {
 
-                                ya_orders.push({
+                                if(el.offerName.indexOf('белье') >= 0 || el.offerName.indexOf('бельё') >= 0) {
 
-                                    'name': el.offerName,
-                                    'vendor': el.offerId,
-                                    'quantity': el.count
+                                    ya_orders.push({
 
-                                })
+                                        'name': `КПБ ${el.offerName}`,
+                                        'vendor': el.offerId,
+                                        'quantity': el.count
+
+                                    })
+
+                                }
+
+                                if(el.offerName.indexOf('белье') < 0 && el.offerName.indexOf('бельё') < 0) {
+
+                                    ya_orders.push({
+
+                                        'name': el.offerName,
+                                        'vendor': el.offerId,
+                                        'quantity': el.count
+
+                                    })
+
+                                }
 
                             }
                         }
@@ -3428,7 +3460,7 @@ app.get('/yandex_marks_order', async function (req, res){
 
             content = ``
 
-        }   
+        }
 
     }
 
