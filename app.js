@@ -2166,7 +2166,7 @@ app.get('/wildberries_marks_order', async function(req, res) {
 
         }
 
-        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
+        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('Наматрас') < 0)
 
     }
 
@@ -2218,10 +2218,11 @@ app.get('/wildberries_marks_order', async function(req, res) {
 
     }
 
+    let List = createNameList()
+    let Quantity = createQuantityList()
+
     function createOrder() {
 
-        let List = createNameList()
-        let Quantity = createQuantityList()
         let content = ``
 
         for(let i = 0; i < List.length; i++) {
@@ -2269,9 +2270,11 @@ app.get('/wildberries_marks_order', async function(req, res) {
             content = ``
 
         }
-        
-        // console.log(List)
-        // console.log(Quantity)
+
+        console.log(List)
+        console.log(List.length)
+        console.log(Quantity)
+        console.log(Quantity.length)
 
         html += `<section class="table">
                 <div class="marks-table">
