@@ -2271,11 +2271,6 @@ app.get('/wildberries_marks_order', async function(req, res) {
 
         }
 
-        console.log(List)
-        console.log(List.length)
-        console.log(Quantity)
-        console.log(Quantity.length)
-
         html += `<section class="table">
                 <div class="marks-table">
                     <div class="marks-table-header">
