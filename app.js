@@ -2763,6 +2763,8 @@ app.get('/yandex', async function(req, res){
 
     for(let i = 0; i < ya_orders.length; i++) {
 
+        console.log(ya_orders[i].vendor)
+
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
             "filter": {
@@ -4836,6 +4838,12 @@ app.get('/test_features', async function(req, res){
     await updateShortReport()
 
     res.send(html)
+
+})
+
+app.get('/clear_duplicate', async function(req, res){
+
+    const workbook = new exl.Workbook()
 
 })
 
