@@ -1253,7 +1253,7 @@ app.get('/ozon', async function(req, res){
 
     html += `</section>
              <section class="action-form">
-                <button id="current-order"><a href="http://localhost:3030/wildberries_marks_order" target="_blank">Создать заказы маркировки</a></button>
+                <button id="current-order"><a href="http://localhost:3030/ozon_marks_order" target="_blank">Создать заказы маркировки</a></button>
              </section>
              <div class="body-wrapper"></div>                        
              ${footerComponent}`
