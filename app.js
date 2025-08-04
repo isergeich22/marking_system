@@ -2605,7 +2605,6 @@ app.get('/wildberries/set_marks', async function (req, res){
     for(let i = 0; i < wbOrder.length; i++) {
 
         const order = marksOrderNumbers.find(o => o.value === wbOrder[i].orderNumber)
-        console.log(order)
         if(order.address.length === 2) {
             ws_6.getCell(`C${order.address[1]}`).value = wbOrder[i].mark
         }
