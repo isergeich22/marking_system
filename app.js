@@ -1640,9 +1640,9 @@ app.get('/wildberries', async function(req, res){
 
     const _ws = wb.getWorksheet('Сборочные задания')
 
-    const c14 = _ws.getColumn(14)
+    const c13 = _ws.getColumn(13)
 
-    c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
+    c13.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
         if(rowNumber < 2) return
 
@@ -2100,9 +2100,9 @@ app.get('/wildberries_marks_order', async function(req, res) {
 
     const _ws = wb.getWorksheet('Сборочные задания')
 
-    const c14 = _ws.getColumn(14)
+    const c13 = _ws.getColumn(13)
 
-    c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
+    c13.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
         if(rowNumber < 2) return
 
@@ -2354,7 +2354,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     const w_c1 = ws_1.getColumn(1)
 
-    const w_c14 = ws_1.getColumn(14)
+    const w_c13 = ws_1.getColumn(13)
 
     w_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
@@ -2364,7 +2364,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     })
 
-    w_c14.eachCell({includeEmpty: false}, (c, rowNumber) => {
+    w_c13.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
         if(rowNumber < 2) return
 
