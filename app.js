@@ -2554,16 +2554,18 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     }
 
+    console.log(marks)
+
     for(let i = 0; i < wbOrder.length; i++) {
 
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
 
-        const mark = marks.find(o => o.gtin === gtin && o.status === 'not_used').mark
+        const mark = marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').mark
 
         if(mark) {
 
             wbOrder[i].mark = mark
-            marks.find(o => o.gtin === gtin && o.status === 'not_used').status = 'used'
+            marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').status = 'used'
 
         } else {
             return
