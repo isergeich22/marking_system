@@ -2554,8 +2554,6 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    console.log(marks)
-
     for(let i = 0; i < wbOrder.length; i++) {
 
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
