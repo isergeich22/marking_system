@@ -7,6 +7,10 @@
     padding: 0;
 }
 
+html {
+    background-color: #fff !important;
+}
+
 .header {
     width: 100%;
     font-family: 'Arimo', sans-serif;

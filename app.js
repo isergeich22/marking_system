@@ -1,6 +1,7 @@
 const express = require('express')
 const exl = require('exceljs')
 const cio = require('cheerio')
+const QuickChart = require('quickchart-js')
 const fs = require('fs')
 const fetch = require('node-fetch')
 const axios = require('axios')
@@ -5456,6 +5457,522 @@ app.get('/personal_orders', async function(req, res) {
 
     res.send(html)
     
+})
+
+app.get('/get_products_analytic/:year', async function (req, res) {
+
+    const year = req.params.year
+    const ordersList = []
+
+    const analyticObject = {
+        "Одеяло": 0,
+        "Подушка": 0,
+        "Наперник": 0,
+        "Наматрасник": 0,
+        "Постельное": 0,
+        "Ветошь": 0,
+        "Халат": 0,
+        "Простыня": 0,
+        "Пододеяльник": 0,
+        "Покрывало": 0,
+        "Наволочка": 0,
+        "Матрас": 0
+    }
+
+    let count = 0
+    let hasNext = true
+    let offset = 0
+
+    while(hasNext === true) {
+        const response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+            "dir": "asc",
+            "filter": {
+                "since": `${year}-01-01T00:00:00.000Z`,
+                "status": "delivered",
+                "to": `${year}-12-31T23:59:59.999Z`
+            },
+            "limit": 1000,
+            "offset": offset
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        for(let order of response.data.result.postings) {
+            ordersList.push(order)
+        }
+
+        hasNext = response.data.result.has_next
+        count += response.data.result.postings.length
+        offset = count
+
+    }
+
+    for(let order of ordersList) {
+
+        if(order.products.find(o => o.name.indexOf('Одеяло') >= 0)) {
+            analyticObject["Одеяло"] = analyticObject["Одеяло"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Подушка') >= 0)) {
+            analyticObject["Подушка"] = analyticObject["Подушка"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Наперник') >= 0)) {
+            analyticObject["Наперник"] = analyticObject["Наперник"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Наматрасник') >= 0)) {
+            analyticObject["Наматрасник"] = analyticObject["Наматрасник"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Постельное') >= 0)) {
+            analyticObject["Постельное"] = analyticObject["Постельное"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Пеленки') >= 0)) {
+            analyticObject["Пеленки"] = analyticObject["Пеленки"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Халат') >= 0)) {
+            analyticObject["Халат"] = analyticObject["Халат"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Простынь') >= 0 || o.name.indexOf('Простыня') >= 0)) {
+            analyticObject["Простыня"] = analyticObject["Простыня"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Покрывало') >= 0)) {
+            analyticObject["Покрывало"] = analyticObject["Покрывало"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Наволочка') >= 0)) {
+            analyticObject["Наволочка"] = analyticObject["Наволочка"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Ветошь') >= 0)) {
+            analyticObject["Ветошь"] = analyticObject["Ветошь"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Пододеяльник') >= 0)) {
+            analyticObject["Пододеяльник"] = analyticObject["Пододеяльник"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('Матрас') >= 0)) {
+            analyticObject["Матрас"] = analyticObject["Матрас"] + 1
+        }
+
+    }
+
+    let html = `${headerComponent}
+            <title>Аналитика спроса на товары</title>
+        </head>
+        <body>
+            <div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса за ${year} год.</h1>
+                </div>
+            </div>`
+
+    const myChart = new QuickChart()
+
+    myChart.setConfig({
+        type: 'bar',
+        data: {
+            labels: Object.keys(analyticObject),
+            datasets: [
+                {
+                    label: 'Получено, шт.',
+                    data: Object.values(analyticObject),
+                    fill: false
+                }
+            ]
+        }
+    })
+    .setWidth(800)
+    .setHeight(400)
+    .setBackgroundColor('transparent')
+
+    const chartUrl = myChart.getUrl()
+
+    html += `
+            <div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <img src="${chartUrl}">
+                </div>
+            </div>`
+
+    html += `<div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <table class="table is-fullwidth my-table">
+                            <thead>
+                                <tr>
+                                    <th class="has-text-left">Продукт</th>
+                                    <th class="has-text-left">Количество</th>
+                                </tr>
+                            </thead>
+                            <tbody>`
+
+    for(let key of Object.keys(analyticObject)) {
+
+        html += `<tr>
+                    <td>${key}</td>
+                    <td>
+                        ${analyticObject[key]} шт.
+                    </td>
+                </tr>`
+
+    }
+
+    html += `</tbody>
+        </table>`    
+                    
+    html += `</div>
+            </div>`
+
+    html += footerComponent
+
+    res.send(html)
+
+    // console.log(ordersList.length)
+    // res.json(analyticObject)
+
+})
+
+app.get('/get_products_analytic/:year/:product', async function (req, res) {
+
+    const year = req.params.year
+    let ordersList = []
+
+    const analyticObject = {
+        "Тенсель": 0,
+        "Сатин": 0,
+        "Страйп-сатин": 0,
+        "Твил-сатин": 0,
+        "Полисатин": 0,
+        "Бязь": 0,
+        "Сатин-жаккард": 0,
+        "Вареный хлопок": 0,
+        "Мулетон": 0,
+        "Микрофибра": 0,
+        "Перкаль": 0,
+        "Поплин": 0,
+        "Ранфорс": 0
+    }
+
+    let count = 0
+    let hasNext = true
+    let offset = 0
+
+    while(hasNext === true) {
+        const response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+            "dir": "asc",
+            "filter": {
+                "since": `${year}-01-01T00:00:00.000Z`,
+                "status": "delivered",
+                "to": `${year}-12-31T23:59:59.999Z`
+            },
+            "limit": 1000,
+            "offset": offset
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        for(let order of response.data.result.postings) {
+            ordersList.push(order)
+        }
+
+        hasNext = response.data.result.has_next
+        count += response.data.result.postings.length
+        offset = count
+
+    }
+
+    console.log(ordersList.length)
+
+    ordersList = ordersList.filter(o => {
+        if(o.products.find(i => i.name.indexOf(req.params.product) >= 0)) {
+            return o
+        }
+    })
+
+    console.log(ordersList.length)
+
+    for(let order of ordersList) {
+
+        if(order.products.find(o => o.name.indexOf('тенсел') >= 0)) {
+            analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') < 0 && o.name.indexOf('жаккард') < 0 && o.name.indexOf('твил') < 0 && o.name.indexOf('поли') < 0)) {
+            analyticObject["Сатин"] = analyticObject["Сатин"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') >= 0)) {
+            analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('твил') >= 0)) {
+            analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('поли') >= 0)) {
+            analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('жаккард') >= 0)) {
+            analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('бяз') >= 0)) {
+            analyticObject["Бязь"] = analyticObject["Бязь"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('варен') >= 0 || o.name.indexOf('варён') >= 0 || o.name.indexOf('хлоп') >= 0)) {
+            analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('микрофибр') >= 0)) {
+            analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('мулетон') >= 0)) {
+            analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
+        }
+        
+        if(order.products.find(o => o.name.indexOf('поплин') >= 0)) {
+            analyticObject["Поплин"] = analyticObject["Поплин"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('перкал') >= 0)) {
+            analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
+        }
+
+        if(order.products.find(o => o.name.indexOf('ранфор') >= 0)) {
+            analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
+        }
+
+    }
+
+    let html = `${headerComponent}
+            <title>Аналитика спроса на товары</title>
+        </head>
+        <body>
+            <div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса за ${year} год.</h1>
+                </div>
+            </div>`
+
+    const myChart = new QuickChart()
+
+    myChart.setConfig({
+        type: 'bar',
+        data: {
+            labels: Object.keys(analyticObject),
+            datasets: [
+                {
+                    label: 'Получено, шт.',
+                    data: Object.values(analyticObject),
+                    fill: false
+                }
+            ]
+        }
+    })
+    .setWidth(800)
+    .setHeight(400)
+    .setBackgroundColor('transparent')
+
+    const chartUrl = myChart.getUrl()
+
+    html += `
+            <div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <img src="${chartUrl}">
+                </div>
+            </div>`
+
+    html += `<div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <table class="table is-fullwidth my-table">
+                            <thead>
+                                <tr>
+                                    <th class="has-text-left">Продукт</th>
+                                    <th class="has-text-left">Количество</th>
+                                </tr>
+                            </thead>
+                            <tbody>`
+
+    for(let key of Object.keys(analyticObject)) {
+
+        html += `<tr>
+                    <td>${key}</td>
+                    <td>
+                        ${analyticObject[key]} шт.
+                    </td>
+                </tr>`
+
+    }
+
+    html += `</tbody>
+        </table>`    
+                    
+    html += `</div>
+            </div>`
+
+    html += footerComponent
+
+    res.send(html)
+
+    // res.json(analyticObject)
+
+})
+
+app.get('/get_year_dynamic/:year', async function (req, res) {
+
+    const monthQuantityOrders = []
+    const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+
+    const year = req.params.year
+
+    for(let i = 1; i <= 11; i++) {
+
+        let monthFrom = ''
+        let monthTo = ''
+
+        if(i < 10 && i+1 < 10) {
+            monthFrom = `0${i}`
+            monthTo = `0${i+1}`
+        } else if (i < 10 && i+1 >= 10) {
+            monthFrom = `0${i}`
+            monthTo = `${i+1}`
+        } else if (i >= 10) {
+            monthFrom = `${i}`
+            monthTo = `${i+1}`
+        }
+
+        const response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+            "dir": "asc",
+            "filter": {
+                "since": `${year}-${monthFrom}-01T00:00:00.000Z`,
+                "status": "delivered",
+                "to": `${year}-${monthTo}-01T23:59:59.999Z`,
+
+            },
+            "limit": 1000,
+            "offset": 0
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        const filteredArray = response.data.result.postings.filter(o => {
+            if(o.shipment_date.indexOf(`${year}-${monthFrom}-`) >= 0) {
+                return o
+            }
+        })
+
+        monthQuantityOrders.push(filteredArray.length)
+
+    }
+
+    const response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+        "dir": "asc",
+        "filter": {
+            "since": `${year}-12-01T00:00:00.000Z`,
+            "status": "delivered",
+            "to": `${year}-12-31T23:59:59.999Z`,
+
+        },
+        "limit": 1000,
+        "offset": 0
+    }, {
+        headers: {
+            "Client-Id": process.env.OZON_CLIENT_ID,
+            "Api-Key": process.env.OZON_API_KEY
+        }
+    })
+
+    const filteredArray = response.data.result.postings.filter(o => {
+        if(o.shipment_date.indexOf(`${year}-12-`) >= 0) {
+            return o
+        }
+    })
+
+    monthQuantityOrders.push(filteredArray.length)
+
+    let html = `${headerComponent}
+            <title>Динамика заказов в течение года</title>
+            </head>
+        <body>
+            <div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <h1 class="title is-4 has-text-centered has-text-black">Динамика заказов в течение года за ${year} год.</h1>
+                </div>
+            </div>`
+
+    const myChart = new QuickChart()
+
+    myChart.setConfig({
+        type: 'line',
+        data: {
+            labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+            datasets: [{
+                label: 'Количество заказов в месяц, шт.',
+                data: monthQuantityOrders,
+                fill: false
+            }]
+        }
+    })
+
+    const chartUrl = myChart.getUrl()
+
+    html += `<div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <img src="${chartUrl}">
+                </div>
+            </div>
+            <div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <table class="table is-fullwidth my-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Месяц</th>
+                                                <th class="has-text-left">Количество</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`
+
+    for(let i = 0; i < months.length; i++) {
+
+        html += `<tr>
+                    <td>${months[i]}</td>
+                    <td>
+                        ${monthQuantityOrders[i]} шт.
+                    </td>
+                </tr>`
+
+    }
+
+    html += `</tbody>
+        </table>`    
+                    
+    html += `</div>
+            </div>`
+
+    html += footerComponent
+
+    // res.json(monthQuantityOrders)
+
+    res.send(html)
+
 })
 
 app.listen(3030)

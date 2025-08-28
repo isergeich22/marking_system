@@ -5,7 +5,11 @@ const headerComponent = `<!DOCTYPE html>
                                 <meta http-equiv="X-UA-Compatible" content="IE=edge">
                                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                                 <link rel="stylesheet" href="/css/styles.css" type="text/css">
-                                <link rel="shortcut icon" type="image/png" href="/favicon.png">`
+                                <link rel="shortcut icon" type="image/png" href="/favicon.png">
+                                <link
+                                    rel="stylesheet"
+                                    href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+                                >`
 
 const navComponent = `<header class="header">
                         <nav>
