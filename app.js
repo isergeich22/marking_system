@@ -5975,4 +5975,153 @@ app.get('/get_year_dynamic/:year', async function (req, res) {
 
 })
 
+app.get('/get_income_analytic/:month/:product', async function (req, res) {
+
+    let monthFrom = ''
+    let monthTo = ''
+
+    let year = new Date().getFullYear()
+
+    if(Number(req.params.month) < 10 && Number(req.params.month) + 1 < 10) {
+
+        monthFrom = `0${req.params.month}`
+        monthTo = `0${Number(req.params.month) + 1}`
+
+    }
+
+    if(Number(req.params.month) < 10 && Number(req.params.month) + 1 === 10) {
+
+        monthFrom = `0${req.params.month}`
+        monthTo = `${Number(req.params.month) + 1}`
+
+    }
+
+    if(Number(req.params.month) >= 10 && Number(req.params.month) + 1 < 12) {
+
+        monthFrom = `${req.params.month}`
+        monthTo = `${Number(req.params.month) + 1}`
+
+    }
+
+    if(Number(req.params.month) === 12) {
+
+        monthFrom = `${req.params.month}`
+        monthTo = `01`
+        year = Number(year) + 1
+
+    }
+
+    const response =  await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+        "dir": "asc",
+        "filter": {
+            "delivery_method_id": [
+                "23463726191000"
+            ],
+            "since": `${new Date().getFullYear()}-${monthFrom}-01T00:00:00.000Z`,
+            "status": "delivered",
+            "to": `${year}-${monthTo}-01T23:59:59.999Z`,
+        },
+        "limit": 1000,
+        "offset": 0
+    },{
+        headers: {
+            "Client-Id": process.env.OZON_CLIENT_ID,
+            "Api-Key": process.env.OZON_API_KEY
+        }
+    })
+
+    let ozonDelOrders = response.data.result.postings
+
+    ozonDelOrders = ozonDelOrders.filter(o => {
+        if(o.products.find(i => i.name.indexOf(req.params.product) >= 0)) {
+            return o
+        }
+    })
+
+    let orderIncomeInfo = []
+
+    for(let order of ozonDelOrders) {
+
+        const response = await axios.post('https://api-seller.ozon.ru/v3/finance/transaction/list', {
+
+            "filter": {
+                "date": {
+                    "from": `${new Date().getFullYear()}-${monthFrom}-01T00:00:00.000Z`,
+                    "to": `${year}-${monthTo}-01T23:59:59.999Z`
+                },
+            "operation_type": [ ],
+            "posting_number": order.posting_number,
+            "transaction_type": "all"
+            },
+            "page": 1,
+            "page_size": 1000
+
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        orderIncomeInfo.push(response.data.result)
+
+    }
+
+    let html = `${headerComponent}
+            <title>Аналитика дохода с заказов по указанному продукту</title>
+        </head>
+    <body>`
+
+    html += `<div class="columns is-mobile has-text-black">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <table class="table is-fullwidth my-table">
+                            <thead>
+                                <tr>
+                                    <th class="has-text-left has-text-black">Номер заказа</th>
+                                    <th class="has-text-left has-text-black">Наименование</th>
+                                    <th class="has-text-left has-text-black">Сумма к начислению</th>
+                                    <th class="has-text-left has-text-black">Сумма заказа</th>
+                                    <th class="has-text-left has-text-black">% начисления от суммы заказа</th>
+                                </tr>
+                            </thead>
+                            <tbody>`
+
+    for(let item of orderIncomeInfo) {
+
+        let element = item.operations.find(o => o.operation_type_name === 'Доставка покупателю')
+
+        if(element.accruals_for_sale > 0) {
+
+            html += `<tr>
+                        <td class="has-text-black">${element.posting.posting_number}</td>
+                        <td class="has-text-black">${element.items[0].name}</td>
+                        <td class="has-text-black">
+                            ${Math.round(element.amount)} руб.
+                        </td>
+                        <td class="has-text-black">
+                            ${Math.round(element.accruals_for_sale)} руб.
+                        </td>
+                        <td class="has-text-black">
+                            ${Math.round((Math.round(element.amount)/Math.round(element.accruals_for_sale)) * 100)} %
+                        </td>
+                    </tr>`
+
+        }
+
+    }
+
+    html += `</tbody>
+        </table>`    
+                    
+    html += `</div>
+            </div>`
+
+    html += footerComponent
+
+    res.send(html)
+
+    // res.json(orderIncomeInfo)
+
+})
+
 app.listen(3030)
