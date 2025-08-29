@@ -316,6 +316,7 @@ html {
 
 .table {
     width: 100%;
+    background-color: #fff !important;
 }
 
     .marks-table {
