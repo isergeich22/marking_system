@@ -5646,20 +5646,27 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
     const year = req.params.year
     let ordersList = []
 
-    const analyticObject = {
-        "Тенсель": 0,
-        "Сатин": 0,
-        "Страйп-сатин": 0,
-        "Твил-сатин": 0,
-        "Полисатин": 0,
-        "Бязь": 0,
-        "Сатин-жаккард": 0,
-        "Вареный хлопок": 0,
-        "Мулетон": 0,
-        "Микрофибра": 0,
-        "Перкаль": 0,
-        "Поплин": 0,
-        "Ранфорс": 0
+    let analyticObject = {}
+
+    if(req.params.product.toLowerCase().indexOf('простын') >= 0 || req.params.product.toLowerCase().indexOf('пододе') >= 0 || req.params.product.toLowerCase().indexOf('наволочка') >= 0 || req.params.product.toLowerCase().indexOf('постельное') >= 0) {
+
+        analyticObject = {
+            "Тенсель": 0,
+            "Сатин": 0,
+            "Страйп-сатин": 0,
+            "Твил-сатин": 0,
+            "Полисатин": 0,
+            "Бязь": 0,
+            "Сатин-жаккард": 0,
+            "Вареный хлопок": 0,
+            "Мулетон": 0,
+            "Микрофибра": 0,
+            "Перкаль": 0,
+            "Поплин": 0,
+            "Ранфорс": 0,
+            "Микросатин": 0
+        }
+
     }
 
     let count = 0
@@ -5693,15 +5700,36 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
     }
 
-    console.log(ordersList.length)
-
     ordersList = ordersList.filter(o => {
         if(o.products.find(i => i.name.indexOf(req.params.product) >= 0)) {
             return o
         }
     })
 
-    console.log(ordersList.length)
+    let specialFilter = {}
+
+    if(req.params.product.toLowerCase().indexOf('простын') >= 0) {
+
+        specialFilter = {
+            "На резинке": 0,
+            "Стандартная": 0
+        }
+
+        ordersList.forEach(o => {
+
+            if(o.products.find(i => i.name.indexOf(req.params.product) >= 0 && i.name.indexOf('на резинке') >= 0)) {
+
+                specialFilter["На резинке"] = specialFilter["На резинке"] + 1
+
+            } else {
+
+                specialFilter["Стандартная"] = specialFilter["Стандартная"] + 1
+
+            }
+
+        })
+
+    }
 
     for(let order of ordersList) {
 
@@ -5757,6 +5785,10 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
             analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
         }
 
+        if(order.products.find(o => o.name.indexOf('микросатин') >= 0)) {
+            analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
+        }
+
     }
 
     let html = `${headerComponent}
@@ -5790,6 +5822,24 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
     const chartUrl = myChart.getUrl()
 
+    const specialChart = new QuickChart()
+
+    specialChart.setConfig({
+        type: 'bar',
+        data: {
+            labels: Object.keys(specialFilter),
+            datasets: [
+                {
+                    label: 'Получено, шт.',
+                    data: Object.values(specialFilter),
+                    fill: false
+                }
+            ]
+        }
+    })
+
+    const specialUrl = specialChart.getUrl()
+
     html += `
             <div class="columns is-mobile">
                 <div class="column is-three-fifths is-offset-one-fifth">
@@ -5802,8 +5852,8 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                         <table class="table is-fullwidth my-table">
                             <thead>
                                 <tr>
-                                    <th class="has-text-left">Продукт</th>
-                                    <th class="has-text-left">Количество</th>
+                                    <th class="has-text-left has-text-black">Продукт</th>
+                                    <th class="has-text-left has-text-black">Количество</th>
                                 </tr>
                             </thead>
                             <tbody>`
@@ -5811,9 +5861,44 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
     for(let key of Object.keys(analyticObject)) {
 
         html += `<tr>
-                    <td>${key}</td>
-                    <td>
+                    <td class="has-text-black">${key}</td>
+                    <td class="has-text-black">
                         ${analyticObject[key]} шт.
+                    </td>
+                </tr>`
+
+    }
+
+    html += `</tbody>
+        </table>`    
+                    
+    html += `</div>
+            </div>`
+
+    html += `
+            <div class="columns is-mobile">
+                <div class="column is-three-fifths is-offset-one-fifth">
+                    <img src="${specialUrl}">
+                </div>
+            </div>`
+
+    html += `<div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <table class="table is-fullwidth my-table">
+                            <thead>
+                                <tr>
+                                    <th class="has-text-left has-text-black">Продукт</th>
+                                    <th class="has-text-left has-text-black">Количество</th>
+                                </tr>
+                            </thead>
+                            <tbody>`
+                            
+    for(let key of Object.keys(specialFilter)) {
+
+        html += `<tr>
+                    <td class="has-text-black">${key}</td>
+                    <td class="has-text-black">
+                        ${specialFilter[key]} шт.
                     </td>
                 </tr>`
 
@@ -5927,7 +6012,7 @@ app.get('/get_year_dynamic/:year', async function (req, res) {
             datasets: [{
                 label: 'Количество заказов в месяц, шт.',
                 data: monthQuantityOrders,
-                fill: false
+                fill: '#4e79a6'
             }]
         }
     })
@@ -5944,8 +6029,8 @@ app.get('/get_year_dynamic/:year', async function (req, res) {
                         <table class="table is-fullwidth my-table">
                                         <thead>
                                             <tr>
-                                                <th>Месяц</th>
-                                                <th class="has-text-left">Количество</th>
+                                                <th class="has-text-black">Месяц</th>
+                                                <th class="has-text-left has-text-black">Количество</th>
                                             </tr>
                                         </thead>
                                         <tbody>`
@@ -5953,8 +6038,8 @@ app.get('/get_year_dynamic/:year', async function (req, res) {
     for(let i = 0; i < months.length; i++) {
 
         html += `<tr>
-                    <td>${months[i]}</td>
-                    <td>
+                    <td class="has-text-black">${months[i]}</td>
+                    <td class="has-text-black">
                         ${monthQuantityOrders[i]} шт.
                     </td>
                 </tr>`
