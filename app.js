@@ -5922,9 +5922,11 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
         })
 
         let bedsheetHeight = {
+            "10": 0,
             "20": 0,
             "30": 0,
-            "40": 0
+            "40": 0,
+            "45": 0
         }
 
         const rubberOffers = []
@@ -5965,31 +5967,101 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         for(let i of data) {
 
-            if(i.attributes.find(o => o.id === 8414).values[0].value === 20) {
+            console.log(i.attributes.find(o => o.id === 6771).values[0].value)
+
+            if(Number(i.attributes.find(o => o.id === 8414).values[0].value) === 10) {
+
+                bedsheetHeight["10"] = bedsheetHeight["10"] + 1
+
+            }
+
+            if(Number(i.attributes.find(o => o.id === 8414).values[0].value) === 20) {
 
                 bedsheetHeight["20"] = bedsheetHeight["20"] + 1
 
             }
 
-            if(i.attributes.find(o => o.id === 8414).values[0].value === 30) {
+            if(Number(i.attributes.find(o => o.id === 8414).values[0].value) === 30) {
 
                 bedsheetHeight["30"] = bedsheetHeight["30"] + 1
 
             }
 
-            if(i.attributes.find(o => o.id === 8414).values[0].value === 40) {
+            if(Number(i.attributes.find(o => o.id === 8414).values[0].value) === 40) {
 
                 bedsheetHeight["40"] = bedsheetHeight["40"] + 1
 
             }
 
+            if(Number(i.attributes.find(o => o.id === 8414).values[0].value) === 45) {
+
+                bedsheetHeight["45"] = bedsheetHeight["45"] + 1
+
+            }
+
         }
+
+        const heightChart = new QuickChart()
+
+        heightChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bedsheetHeight),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bedsheetHeight),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const heightChartUrl = heightChart.getUrl()
+
+        html += `
+                <div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <img src="${heightChartUrl}">
+                    </div>
+                </div>`
+
+        html += `<div class="columns is-mobile">
+                        <div class="column is-three-fifths is-offset-one-fifth">
+                            <table class="table is-fullwidth my-table">
+                                <thead>
+                                    <tr>
+                                        <th class="has-text-left has-text-black">Высота</th>
+                                        <th class="has-text-left has-text-black">Количество</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`
+
+        for(let key of Object.keys(bedsheetHeight)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bedsheetHeight[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`    
+                        
+        html += `</div>
+                </div>`
 
         html += footerComponent
 
-        // res.send(html)
+        res.send(html)
 
-        res.json(data)    
+        // res.json(bedsheetHeight)    
         
     }
 
