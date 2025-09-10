@@ -5710,211 +5710,288 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
     if(req.params.product.toLowerCase().indexOf('простын') >= 0) {
 
-        specialFilter = {
-            "На резинке": 0,
-            "Стандартная": 0
+        if(req.params.product.toLowerCase().indexOf('простын') >= 0) {
+
+            specialFilter = {
+                "На резинке": 0,
+                "Стандартная": 0
+            }
+
+            ordersList.forEach(o => {
+
+                if(o.products.find(i => i.name.indexOf(req.params.product) >= 0 && i.name.indexOf('на резинке') >= 0)) {
+
+                    specialFilter["На резинке"] = specialFilter["На резинке"] + 1
+
+                } else {
+
+                    specialFilter["Стандартная"] = specialFilter["Стандартная"] + 1
+
+                }
+
+            })
+
         }
 
-        ordersList.forEach(o => {
+        for(let order of ordersList) {
 
+            if(order.products.find(o => o.name.indexOf('тенсел') >= 0)) {
+                analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') < 0 && o.name.indexOf('жаккард') < 0 && o.name.indexOf('твил') < 0 && o.name.indexOf('поли') < 0)) {
+                analyticObject["Сатин"] = analyticObject["Сатин"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') >= 0)) {
+                analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('твил') >= 0)) {
+                analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('поли') >= 0)) {
+                analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('жаккард') >= 0)) {
+                analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('бяз') >= 0)) {
+                analyticObject["Бязь"] = analyticObject["Бязь"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('варен') >= 0 || o.name.indexOf('варён') >= 0 || o.name.indexOf('хлоп') >= 0)) {
+                analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('микрофибр') >= 0)) {
+                analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('мулетон') >= 0)) {
+                analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
+            }
+            
+            if(order.products.find(o => o.name.indexOf('поплин') >= 0)) {
+                analyticObject["Поплин"] = analyticObject["Поплин"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('перкал') >= 0)) {
+                analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('ранфор') >= 0)) {
+                analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
+            }
+
+            if(order.products.find(o => o.name.indexOf('микросатин') >= 0)) {
+                analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
+            }
+
+        }
+
+        let html = `${headerComponent}
+                <title>Аналитика спроса на товары</title>
+            </head>
+            <body>
+                <div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса за ${year} год.</h1>
+                    </div>
+                </div>`
+
+        const myChart = new QuickChart()
+
+        myChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(analyticObject),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(analyticObject),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const chartUrl = myChart.getUrl()
+
+        const specialChart = new QuickChart()
+
+        specialChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(specialFilter),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(specialFilter),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const specialUrl = specialChart.getUrl()
+
+        html += `
+                <div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <img src="${chartUrl}">
+                    </div>
+                </div>`
+
+        html += `<div class="columns is-mobile">
+                        <div class="column is-three-fifths is-offset-one-fifth">
+                            <table class="table is-fullwidth my-table">
+                                <thead>
+                                    <tr>
+                                        <th class="has-text-left has-text-black">Продукт</th>
+                                        <th class="has-text-left has-text-black">Количество</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`
+
+        for(let key of Object.keys(analyticObject)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${analyticObject[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`    
+                        
+        html += `</div>
+                </div>`
+
+        html += `
+                <div class="columns is-mobile">
+                    <div class="column is-three-fifths is-offset-one-fifth">
+                        <img src="${specialUrl}">
+                    </div>
+                </div>`
+
+        html += `<div class="columns is-mobile">
+                        <div class="column is-three-fifths is-offset-one-fifth">
+                            <table class="table is-fullwidth my-table">
+                                <thead>
+                                    <tr>
+                                        <th class="has-text-left has-text-black">Продукт</th>
+                                        <th class="has-text-left has-text-black">Количество</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`
+                                
+        for(let key of Object.keys(specialFilter)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${specialFilter[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`    
+                        
+        html += `</div>
+                </div>`
+
+        const rubberOrders = ordersList.filter(o => {
             if(o.products.find(i => i.name.indexOf(req.params.product) >= 0 && i.name.indexOf('на резинке') >= 0)) {
+                return o
+            }
+        })
 
-                specialFilter["На резинке"] = specialFilter["На резинке"] + 1
+        let bedsheetHeight = {
+            "20": 0,
+            "30": 0,
+            "40": 0
+        }
 
-            } else {
+        const rubberOffers = []
 
-                specialFilter["Стандартная"] = specialFilter["Стандартная"] + 1
+        for(order of rubberOrders) {
+
+            order.products.forEach( async (i) => {
+
+                if(i.name.indexOf('на резинке') >= 0 && i.name.toLowerCase().indexOf('простын') >= 0) {
+
+                    rubberOffers.push(i.offer_id)                    
+
+                }
+
+            })
+
+        }
+
+        const uniqueOffers = [...new Set(rubberOffers)]
+
+        const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+            "filter": {
+                "offer_id": uniqueOffers,
+                "visibility": "ALL"
+            },
+            "limit": 1000,
+            "sort_dir": "ASC"
+
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        const data = response.data.result
+
+        for(let i of data) {
+
+            if(i.attributes.find(o => o.id === 8414).values[0].value === 20) {
+
+                bedsheetHeight["20"] = bedsheetHeight["20"] + 1
 
             }
 
-        })
+            if(i.attributes.find(o => o.id === 8414).values[0].value === 30) {
 
-    }
+                bedsheetHeight["30"] = bedsheetHeight["30"] + 1
 
-    for(let order of ordersList) {
+            }
 
-        if(order.products.find(o => o.name.indexOf('тенсел') >= 0)) {
-            analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
+            if(i.attributes.find(o => o.id === 8414).values[0].value === 40) {
+
+                bedsheetHeight["40"] = bedsheetHeight["40"] + 1
+
+            }
+
         }
 
-        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') < 0 && o.name.indexOf('жаккард') < 0 && o.name.indexOf('твил') < 0 && o.name.indexOf('поли') < 0)) {
-            analyticObject["Сатин"] = analyticObject["Сатин"] + 1
-        }
+        html += footerComponent
 
-        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') >= 0)) {
-            analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
-        }
+        // res.send(html)
 
-        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('твил') >= 0)) {
-            analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('поли') >= 0)) {
-            analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('жаккард') >= 0)) {
-            analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('бяз') >= 0)) {
-            analyticObject["Бязь"] = analyticObject["Бязь"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('варен') >= 0 || o.name.indexOf('варён') >= 0 || o.name.indexOf('хлоп') >= 0)) {
-            analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('микрофибр') >= 0)) {
-            analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('мулетон') >= 0)) {
-            analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
-        }
+        res.json(data)    
         
-        if(order.products.find(o => o.name.indexOf('поплин') >= 0)) {
-            analyticObject["Поплин"] = analyticObject["Поплин"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('перкал') >= 0)) {
-            analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('ранфор') >= 0)) {
-            analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
-        }
-
-        if(order.products.find(o => o.name.indexOf('микросатин') >= 0)) {
-            analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
-        }
-
     }
-
-    let html = `${headerComponent}
-            <title>Аналитика спроса на товары</title>
-        </head>
-        <body>
-            <div class="columns is-mobile">
-                <div class="column is-three-fifths is-offset-one-fifth">
-                    <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса за ${year} год.</h1>
-                </div>
-            </div>`
-
-    const myChart = new QuickChart()
-
-    myChart.setConfig({
-        type: 'bar',
-        data: {
-            labels: Object.keys(analyticObject),
-            datasets: [
-                {
-                    label: 'Получено, шт.',
-                    data: Object.values(analyticObject),
-                    fill: false
-                }
-            ]
-        }
-    })
-    .setWidth(800)
-    .setHeight(400)
-    .setBackgroundColor('transparent')
-
-    const chartUrl = myChart.getUrl()
-
-    const specialChart = new QuickChart()
-
-    specialChart.setConfig({
-        type: 'bar',
-        data: {
-            labels: Object.keys(specialFilter),
-            datasets: [
-                {
-                    label: 'Получено, шт.',
-                    data: Object.values(specialFilter),
-                    fill: false
-                }
-            ]
-        }
-    })
-
-    const specialUrl = specialChart.getUrl()
-
-    html += `
-            <div class="columns is-mobile">
-                <div class="column is-three-fifths is-offset-one-fifth">
-                    <img src="${chartUrl}">
-                </div>
-            </div>`
-
-    html += `<div class="columns is-mobile">
-                    <div class="column is-three-fifths is-offset-one-fifth">
-                        <table class="table is-fullwidth my-table">
-                            <thead>
-                                <tr>
-                                    <th class="has-text-left has-text-black">Продукт</th>
-                                    <th class="has-text-left has-text-black">Количество</th>
-                                </tr>
-                            </thead>
-                            <tbody>`
-
-    for(let key of Object.keys(analyticObject)) {
-
-        html += `<tr>
-                    <td class="has-text-black">${key}</td>
-                    <td class="has-text-black">
-                        ${analyticObject[key]} шт.
-                    </td>
-                </tr>`
-
-    }
-
-    html += `</tbody>
-        </table>`    
-                    
-    html += `</div>
-            </div>`
-
-    html += `
-            <div class="columns is-mobile">
-                <div class="column is-three-fifths is-offset-one-fifth">
-                    <img src="${specialUrl}">
-                </div>
-            </div>`
-
-    html += `<div class="columns is-mobile">
-                    <div class="column is-three-fifths is-offset-one-fifth">
-                        <table class="table is-fullwidth my-table">
-                            <thead>
-                                <tr>
-                                    <th class="has-text-left has-text-black">Продукт</th>
-                                    <th class="has-text-left has-text-black">Количество</th>
-                                </tr>
-                            </thead>
-                            <tbody>`
-                            
-    for(let key of Object.keys(specialFilter)) {
-
-        html += `<tr>
-                    <td class="has-text-black">${key}</td>
-                    <td class="has-text-black">
-                        ${specialFilter[key]} шт.
-                    </td>
-                </tr>`
-
-    }
-
-    html += `</tbody>
-        </table>`    
-                    
-    html += `</div>
-            </div>`
-
-    html += footerComponent
-
-    res.send(html)
-
-    // res.json(analyticObject)
 
 })
 
