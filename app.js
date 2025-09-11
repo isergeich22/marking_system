@@ -5799,7 +5799,7 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
             <body>
                 <div class="columns is-mobile">
                     <div class="column is-three-fifths is-offset-one-fifth">
-                        <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса за ${year} год.</h1>
+                        <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса на простыни за ${year} год.</h1>
                     </div>
                 </div>`
 
