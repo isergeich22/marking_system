@@ -5801,7 +5801,9 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                     <div class="column is-three-fifths is-offset-one-fifth">
                         <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса на простыни за ${year} год.</h1>
                     </div>
-                </div>`
+                </div>
+                <div class="fixed-grid has-2-cols">
+                    <div class="grid">`
 
         const myChart = new QuickChart()
 
@@ -5845,23 +5847,18 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         const specialUrl = specialChart.getUrl()
 
-        html += `
-                <div class="columns is-mobile">
-                    <div class="column is-three-fifths is-offset-one-fifth">
-                        <img src="${chartUrl}">
-                    </div>
-                </div>`
+        html += `<div class="cell">
+                    <img src="${chartUrl}">`
 
-        html += `<div class="columns is-mobile">
-                        <div class="column is-three-fifths is-offset-one-fifth">
-                            <table class="table is-fullwidth my-table">
-                                <thead>
-                                    <tr>
-                                        <th class="has-text-left has-text-black">Продукт</th>
-                                        <th class="has-text-left has-text-black">Количество</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`
+        html += `
+                <table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Продукт</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
 
         for(let key of Object.keys(analyticObject)) {
 
@@ -5877,26 +5874,19 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
         html += `</tbody>
             </table>`    
                         
-        html += `</div>
-                </div>`
+        html += `</div>`
 
-        html += `
-                <div class="columns is-mobile">
-                    <div class="column is-three-fifths is-offset-one-fifth">
-                        <img src="${specialUrl}">
-                    </div>
-                </div>`
+        html += `<div class="cell">
+                    <img src="${specialUrl}">`
 
-        html += `<div class="columns is-mobile">
-                        <div class="column is-three-fifths is-offset-one-fifth">
-                            <table class="table is-fullwidth my-table">
-                                <thead>
-                                    <tr>
-                                        <th class="has-text-left has-text-black">Продукт</th>
-                                        <th class="has-text-left has-text-black">Количество</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Продукт</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
                                 
         for(let key of Object.keys(specialFilter)) {
 
@@ -5912,8 +5902,7 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
         html += `</tbody>
             </table>`    
                         
-        html += `</div>
-                </div>`
+        html += `</div>`
 
         const rubberOrders = ordersList.filter(o => {
             if(o.products.find(i => i.name.indexOf(req.params.product) >= 0 && i.name.indexOf('на резинке') >= 0)) {
@@ -5927,6 +5916,10 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
             "30": 0,
             "40": 0,
             "45": 0
+        }
+
+        let bedsheetSizes = {
+
         }
 
         const rubberOffers = []
@@ -5968,6 +5961,16 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
         for(let i of data) {
 
             console.log(i.attributes.find(o => o.id === 6771).values[0].value)
+
+            if(String(i.attributes.find(o => o.id === 6771).values[0].value) in bedsheetSizes) {
+
+                bedsheetSizes[String(i.attributes.find(o => o.id === 6771).values[0].value)] = bedsheetSizes[String(i.attributes.find(o => o.id === 6771).values[0].value)] + 1
+
+            } else {
+
+                bedsheetSizes[String(i.attributes.find(o => o.id === 6771).values[0].value)] = 1
+
+            }
 
             if(Number(i.attributes.find(o => o.id === 8414).values[0].value) === 10) {
 
@@ -6022,23 +6025,17 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         const heightChartUrl = heightChart.getUrl()
 
-        html += `
-                <div class="columns is-mobile">
-                    <div class="column is-three-fifths is-offset-one-fifth">
-                        <img src="${heightChartUrl}">
-                    </div>
-                </div>`
+        html += `<div class="cell">
+                    <img src="${heightChartUrl}">`
 
-        html += `<div class="columns is-mobile">
-                        <div class="column is-three-fifths is-offset-one-fifth">
-                            <table class="table is-fullwidth my-table">
-                                <thead>
-                                    <tr>
-                                        <th class="has-text-left has-text-black">Высота</th>
-                                        <th class="has-text-left has-text-black">Количество</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Высота</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
 
         for(let key of Object.keys(bedsheetHeight)) {
 
@@ -6054,14 +6051,65 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
         html += `</tbody>
             </table>`    
                         
-        html += `</div>
-                </div>`
+        html += `</div>`
 
-        html += footerComponent
+        const sizeChart = new QuickChart()
+
+        sizeChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bedsheetSizes),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bedsheetSizes),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const sizeChartUrl = sizeChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${sizeChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(bedsheetSizes)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bedsheetSizes[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`    
+                        
+        html += `</div>`
+
+        html += `
+                    </div>
+                </div>
+            ${footerComponent}`
 
         res.send(html)
 
-        // res.json(bedsheetHeight)    
+        // res.json(bedsheetSizes)
         
     }
 
