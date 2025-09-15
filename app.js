@@ -2559,8 +2559,6 @@ app.get('/wildberries/set_marks', async function (req, res){
 
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
 
-        console.log(gtin)
-
         const mark = marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').mark
 
         if(mark) {
