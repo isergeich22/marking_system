@@ -6102,6 +6102,117 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                         
         html += `</div>`
 
+        const standartOrders = ordersList.filter(o => {
+            if(o.products.find(i => i.name.indexOf(req.params.product) >= 0 && i.name.indexOf('на резинке') < 0)) {
+                return o
+            }
+        })
+
+        let bedsheetSizesStandart = {
+
+        }
+
+        const standartOffers = []
+
+        for(order of standartOrders) {
+
+            order.products.forEach( async (i) => {
+
+                if(i.name.indexOf('на резинке') < 0 && i.name.toLowerCase().indexOf('простын') >= 0) {
+
+                    standartOffers.push(i.offer_id)                    
+
+                }
+
+            })
+
+        }
+
+        const uniqueOffersStandart = [...new Set(standartOffers)]
+
+        const responseStandart = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+            "filter": {
+                "offer_id": uniqueOffersStandart,
+                "visibility": "ALL"
+            },
+            "limit": 1000,
+            "sort_dir": "ASC"
+
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        const dataStandart = responseStandart.data.result
+
+        for(let i of dataStandart) {
+
+            console.log(i.attributes.find(o => o.id === 6771).values[0].value)
+
+            if(String(i.attributes.find(o => o.id === 6771).values[0].value) in bedsheetSizesStandart) {
+
+                bedsheetSizesStandart[String(i.attributes.find(o => o.id === 6771).values[0].value)] = bedsheetSizesStandart[String(i.attributes.find(o => o.id === 6771).values[0].value)] + 1
+
+            } else {
+
+                bedsheetSizesStandart[String(i.attributes.find(o => o.id === 6771).values[0].value)] = 1
+
+            }            
+
+        }
+
+        const sizeStandartChart = new QuickChart()
+
+        sizeStandartChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bedsheetSizesStandart),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bedsheetSizesStandart),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const sizeStandartChartUrl = sizeStandartChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${sizeStandartChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(bedsheetSizesStandart)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bedsheetSizesStandart[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`    
+                        
+        html += `</div>`
+
         html += `
                     </div>
                 </div>
