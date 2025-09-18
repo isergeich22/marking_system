@@ -5643,6 +5643,8 @@ app.get('/get_products_analytic/:year', async function (req, res) {
 
 app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
+    const List = []
+
     const year = req.params.year
     let ordersList = []
 
@@ -5802,7 +5804,7 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                         <h1 class="title is-4 has-text-centered has-text-black">Аналитика спроса на простыни за ${year} год.</h1>
                     </div>
                 </div>
-                <div class="fixed-grid has-2-cols">
+                <div class="fixed-grid has-1-cols">
                     <div class="grid">`
 
         const myChart = new QuickChart()
@@ -6150,8 +6152,6 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         for(let i of dataStandart) {
 
-            console.log(i.attributes.find(o => o.id === 6771).values[0].value)
-
             if(String(i.attributes.find(o => o.id === 6771).values[0].value) in bedsheetSizesStandart) {
 
                 bedsheetSizesStandart[String(i.attributes.find(o => o.id === 6771).values[0].value)] = bedsheetSizesStandart[String(i.attributes.find(o => o.id === 6771).values[0].value)] + 1
@@ -6203,6 +6203,155 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                         <td class="has-text-black">${key}</td>
                         <td class="has-text-black">
                             ${bedsheetSizesStandart[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`    
+                        
+        html += `</div>`
+
+        let bedsheetColors = {
+
+        }
+
+        const orderOffers = []
+
+        for(order of ordersList) {
+
+            order.products.forEach( async (i) => {
+
+                if(i.name.toLowerCase().indexOf('простын') >= 0) {
+
+                    orderOffers.push(i.offer_id)                    
+
+                }
+
+            })
+
+        }
+
+        const uniqueOffersColor = [...new Set(orderOffers)]
+
+        if(uniqueOffersColor.length > 1000) {
+
+            let temp = []
+
+            for(let i = 0; i < 1000; i++) {
+
+                temp.push(uniqueOffersColor[i])
+
+            }
+
+            List.push(temp)
+
+            temp = []
+
+            for(let i = 1000; i < uniqueOffersColor.length; i++) {
+
+                temp.push(uniqueOffersColor[i])
+
+            }
+
+            List.push(temp)
+
+        }
+
+        const responseColorFirst = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+            "filter": {
+                "offer_id": List[0],
+                "visibility": "ALL"
+            },
+            "limit": 1000,
+            "sort_dir": "ASC"
+
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        let first = responseColorFirst.data.result
+
+        const responseColorSecond = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+            "filter": {
+                "offer_id": List[1],
+                "visibility": "ALL"
+            },
+            "limit": 1000,
+            "sort_dir": "ASC"
+
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        let second = responseColorSecond.data.result
+
+        const dataColor = [...first, ...second]
+
+        for(let i of dataColor) {
+
+            console.log(i.attributes.find(o => o.id === 10096).values[0].value)
+
+            if(String(i.attributes.find(o => o.id === 10096).values[0].value) in bedsheetColors) {
+
+                bedsheetColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = bedsheetColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] + 1
+
+            } else {
+
+                bedsheetColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = 1
+
+            }            
+
+        }
+
+        const colorChart = new QuickChart()
+
+        colorChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bedsheetColors),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bedsheetColors),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const colorChartUrl = colorChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${colorChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(bedsheetColors)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bedsheetColors[key]} шт.
                         </td>
                     </tr>`
 
