@@ -6666,4 +6666,27 @@ app.get('/get_income_analytic/:month/:product', async function (req, res) {
 
 })
 
+app.get('/api_test', async function (req, res) {
+
+    // const response = await axios.post('https://discounts-prices-api.wildberries.ru/api/v2/list/goods/filter', {
+    //     "nmList": [
+    //         392003645
+    //     ]
+    // },{
+    //     headers: {
+    //         "Authorization": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjUwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc3NDA3MzM3NSwiaWQiOiIwMTk5NjMyYS1kMzc3LTc1MjYtOWViZi04OGVkMzYyMWQ2Y2EiLCJpaWQiOjgxNDY5MTMxLCJvaWQiOjY5NzYxMSwicyI6MTYxMjYsInNpZCI6IjFmZmQ5YjkxLTg3MGQtNDBlZC04NjEwLWU2MzQ0ODRkNzM1ZiIsInQiOmZhbHNlLCJ1aWQiOjgxNDY5MTMxfQ.S-7SVdJUNqaLX1Jt26k2Ley069x-FhepvCW0DBRRBnc5JpWTr8tDe6_06xeExH2Q1ozHl6zl0QkoEr50mS-jww"
+    //     }
+    // })
+
+    // res.json(response.data)
+
+    const response = await axios.post('https://seller-services.wildberries.ru/sec/api/fl?u=b5d2d550-f02a-11ee-84a1-b22d46000000&cfidsw-wb=17e8H9p5DFca6dbUW1UlZESrioI5EdA2Iecxg2ehEjjRWaFYXRjsN%2Bh5VbHHy2%2BvY8f8XxM7Y7VaZfzpTd19kz4zeUprukckjpYTUkakStrWGTe83TqPJNam4blAZVOJlG8%2FAkAEy4TYx%2F8BCDW%2F8olMwujbUK3C5o9frCw%3D', {
+        "u": "b5d2d550-f02a-11ee-84a1-b22d46000000",
+        "cfidsw-wb": "17e8H9p5DFca6dbUW1UlZESrioI5EdA2Iecxg2ehEjjRWaFYXRjsN%2Bh5VbHHy2%2BvY8f8XxM7Y7VaZfzpTd19kz4zeUprukckjpYTUkakStrWGTe83TqPJNam4blAZVOJlG8%2FAkAEy4TYx%2F8BCDW%2F8olMwujbUK3C5o9frCw%3D"
+    })
+
+    res.json(response.data)
+    
+})
+
 app.listen(3030)
