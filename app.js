@@ -5934,6 +5934,10 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         }
 
+        let rubberOffersCount = {
+            
+        }
+
         const rubberOffers = []
 
         for(order of rubberOrders) {
@@ -5942,11 +5946,25 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
                 if(i.name.indexOf('на резинке') >= 0 && i.name.toLowerCase().indexOf('простын') >= 0) {
 
-                    rubberOffers.push(i.offer_id)                    
+                    rubberOffers.push(i.offer_id)
 
                 }
 
             })
+
+        }
+
+        for(item of rubberOffers) {
+
+            if(String(item) in rubberOffersCount) {
+
+                rubberOffersCount[String(item)] = rubberOffersCount[String(item)] + 1
+
+            } else {
+
+                rubberOffersCount[String(item)] = 1
+
+            }
 
         }
 
@@ -6377,9 +6395,9 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                 </div>
             ${footerComponent}`
 
-        res.send(html)
+        // res.send(html)
 
-        // res.json(bedsheetSizes)
+        res.json({data, rubberOffersCount})
         
     }
 
