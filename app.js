@@ -943,7 +943,17 @@ app.get('/ozon', async function(req, res){
 
     })
 
-    const result = response.data.result.postings
+    let result = response.data.result.postings
+
+    result = result.filter(o => {
+
+        if(o.delivery_method.id === 23463726191000) {
+
+            return o
+
+        }
+
+    })
 
     result.forEach(el => {
 
@@ -974,6 +984,8 @@ app.get('/ozon', async function(req, res){
     oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
 
     for(let i = 0; i < oz_orders.length; i++) {
+
+        console.log(oz_orders[i].vendor)
 
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
@@ -1426,7 +1438,17 @@ app.get('/ozon_marks_order', async function(req, res){
 
     })
 
-    const result = response.data.result.postings
+    let result = response.data.result.postings
+
+    result = result.filter(o => {
+
+        if(o.delivery_method.id === 23463726191000) {
+
+            return o
+
+        }
+
+    })
 
     result.forEach(el => {
 
