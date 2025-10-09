@@ -926,7 +926,7 @@ app.get('/ozon', async function(req, res){
         'dir': 'asc',
         'filter': {
             'since':'2025-01-01T01:00:00.000Z',
-            'status':'awaiting_packaging',
+            'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
         'limit': 1000,
@@ -1421,7 +1421,7 @@ app.get('/ozon_marks_order', async function(req, res){
         'dir': 'asc',
         'filter': {
             'since':'2025-01-01T01:00:00.000Z',
-            'status':'awaiting_packaging',
+            'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
         'limit': 1000,
