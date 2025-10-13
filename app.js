@@ -925,7 +925,7 @@ app.get('/ozon/:from', async function(req, res){
         
         'dir': 'asc',
         'filter': {
-            'since':`${req.params.from}T00:00:00.000Z`,
+            'since':`${req.params.from}:00:00.000Z`,
             'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
@@ -1367,7 +1367,7 @@ app.get('/ozon/:from', async function(req, res){
 
 })
 
-app.get('/ozon_marks_order', async function(req, res){
+app.get('/ozon_marks_order/:from', async function(req, res){
     
     let oz_orders = []
     const nat_cat = []
@@ -1418,7 +1418,7 @@ app.get('/ozon_marks_order', async function(req, res){
         
         'dir': 'asc',
         'filter': {
-            'since':'2025-01-01T01:00:00.000Z',
+            'since':`${req.params.from}:00:00.000Z`,
             'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
