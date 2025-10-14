@@ -7350,17 +7350,46 @@ app.get('/get_income_analytic/:month/:product', async function (req, res) {
 
 app.get('/api_test', async function (req, res) {
 
-    const response = await axios.post('https://discounts-prices-api.wildberries.ru/api/v2/list/goods/filter', {
-        "nmList": [
-            392003645
-        ]
+    const ya_response = await axios.post('https://b2b-authproxy.taxi.yandex.net/api/b2b/platform/pickup-points/list', {
+        "geo_id": 5,
+        "type": "pickup_point",
+        "payment_method": "already_paid",
+        "available_for_dropoff": false,
+        "is_yandex_branded": false,
+        "is_not_branded_partner_station": false,
+        "is_post_office": false,
+        "payment_methods": [
+            "already_paid"
+        ],
+        "pickup_services": {
+            "is_fitting_allowed": false,
+            "is_partial_refuse_allowed": false,
+            "is_paperless_pickup_allowed": false,
+            "is_unboxing_allowed": false
+        }
     },{
         headers: {
-            "Authorization": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjUwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc3NDA3MzM3NSwiaWQiOiIwMTk5NjMyYS1kMzc3LTc1MjYtOWViZi04OGVkMzYyMWQ2Y2EiLCJpaWQiOjgxNDY5MTMxLCJvaWQiOjY5NzYxMSwicyI6MTYxMjYsInNpZCI6IjFmZmQ5YjkxLTg3MGQtNDBlZC04NjEwLWU2MzQ0ODRkNzM1ZiIsInQiOmZhbHNlLCJ1aWQiOjgxNDY5MTMxfQ.S-7SVdJUNqaLX1Jt26k2Ley069x-FhepvCW0DBRRBnc5JpWTr8tDe6_06xeExH2Q1ozHl6zl0QkoEr50mS-jww"
+            "Authorization": "Bearer y0__xDt8OShCBix9BwglviD3BQOak0tUo1gQM_yL80qweGmZnEfwg"
         }
     })
 
-    res.json(response.data)
+    let ozResponse = await axios.post('https://api-seller.ozon.ru/v1/delivery-method/list', {
+        "filter": {
+            "status": "ACTIVE",
+            "warehouse_id": 21474696078000
+        },
+        "limit": 100,
+        "offset": 0
+    }, {
+        headers: {
+            'Host':'api-seller.ozon.ru',
+            'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+            'Api-Key':`${process.env.OZON_API_KEY}`,
+            'Content-Type':'application/json'
+        }
+    })
+
+    res.json({ozon: ozResponse.data.result, yandex: ya_response.data})
     
 })
 
