@@ -1956,11 +1956,25 @@ app.get('/ozon_marks_order/:from', async function(req, res){
 
             if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
 
-                oz_orders.push({
-                    'name': el.products[i].name,
-                    'vendor': el.products[i].offer_id,
-                    'quantity': Number(el.products[i].quantity)
-                })
+                if(el.products[i].name.indexOf('белье') >= 0 || el.products[i].name.indexOf('бельё') >= 0) {
+
+                    oz_orders.push({
+                        'name': `КПБ ${el.products[i].name}`,
+                        'vendor': el.products[i].offer_id,
+                        'quantity': Number(el.products[i].quantity)
+                    })
+
+                }
+
+                if(el.products[i].name.indexOf('белье') < 0 && el.products[i].name.indexOf('бельё') < 0) {
+
+                    oz_orders.push({
+                        'name': el.products[i].name,
+                        'vendor': el.products[i].offer_id,
+                        'quantity': Number(el.products[i].quantity)
+                    })
+
+                }
 
             }
 
