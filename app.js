@@ -7407,4 +7407,18 @@ app.get('/api_test', async function (req, res) {
     
 })
 
+app.get('/cdek_test', async function (req, res) {
+
+    const authHandle = async () => {
+
+        const response = await axios.post(`https://api.cdek.ru/v2/oauth/token?grant_type=client_credentials&client_id=${process.env.CDEK_ID}&client_secret=${process.env.CDEK_PASS}`)
+
+        return response.data
+
+    }
+
+    res.json(await authHandle())
+    
+})
+
 app.listen(3030)
