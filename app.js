@@ -7417,7 +7417,29 @@ app.get('/cdek_test', async function (req, res) {
 
     }
 
-    res.json(await authHandle())
+    const bearerToken = await authHandle()
+
+    const tariffResponse = await axios.get('https://api.cdek.ru/v2/calculator/alltariffs?x-user-lang=rus', {
+
+        headers: {
+
+            Authorization: `Bearer ${bearerToken.access_token}`
+
+        }
+
+    })
+
+    const orderResponse = await axios.get('https://api.cdek.ru/v2/orders?cdek_number=10168831002', {
+
+        headers: {
+
+            Authorization: `Bearer ${bearerToken.access_token}`
+
+        }
+
+    })
+
+    res.json(tariffResponse.data)
     
 })
 
