@@ -7407,7 +7407,7 @@ app.get('/api_test', async function (req, res) {
     
 })
 
-app.get('/cdek_test', async function (req, res) {
+app.get('/cdek_test/:from/:to', async function (req, res) {
 
     const authHandle = async () => {
 
@@ -7419,27 +7419,61 @@ app.get('/cdek_test', async function (req, res) {
 
     const bearerToken = await authHandle()
 
-    const tariffResponse = await axios.get('https://api.cdek.ru/v2/calculator/alltariffs?x-user-lang=rus', {
+    // const tariffResponse = await axios.get(`${process.env.CDEK_API_URL}/v2/calculator/alltariffs?x-user-lang=rus`, {
 
+    //     headers: {
+
+    //         Authorization: `Bearer ${bearerToken.access_token}`
+
+    //     }
+
+    //})
+
+    console.log({
+        from: req.params.from,
+        to: req.params.to
+    })
+
+    const calculateResponse = await axios.post('https://api.cdek.ru/v2/calculator/tariff', {
+
+        type: 1,
+        tariff_code: 136,
+        from_location: {
+            code: CITIES.find(o => o.city === req.params.from).code,
+            city: req.params.from,
+            contragent_type: 'LEGAL_ENTITY',
+            longitude: CITIES.find(o => o.city === req.params.from).longitude,
+            latitude: CITIES.find(o => o.city === req.params.from).latitude
+        },
+        to_location: {
+            code: CITIES.find(o => o.city === req.params.to).code,
+            city: req.params.to,
+            contragent_type: 'INDIVIDUAL',
+            longitude: CITIES.find(o => o.city === req.params.to).longitude,
+            latitude: CITIES.find(o => o.city === req.params.to).latitude
+        },
+        services: [
+            {
+                code: 'INSURANCE',
+                parameter: 1245
+            }
+        ],
+        packages: {
+            weight: 1500,
+            length: 77,
+            width: 77,
+            height: 2
+        }
+
+    }, {
         headers: {
 
             Authorization: `Bearer ${bearerToken.access_token}`
 
         }
-
     })
 
-    const orderResponse = await axios.get('https://api.cdek.ru/v2/orders?cdek_number=10168831002', {
-
-        headers: {
-
-            Authorization: `Bearer ${bearerToken.access_token}`
-
-        }
-
-    })
-
-    res.json(tariffResponse.data)
+    res.json(calculateResponse.data)
     
 })
 
