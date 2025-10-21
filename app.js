@@ -1478,8 +1478,6 @@ app.get('/ozon/:from', async function(req, res){
 
     for(let i = 0; i < oz_orders.length; i++) {
 
-        console.log(oz_orders[i].vendor)
-
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
             "filter": {
