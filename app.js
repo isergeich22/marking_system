@@ -1478,8 +1478,6 @@ app.get('/ozon/:from', async function(req, res){
 
     for(let i = 0; i < oz_orders.length; i++) {
 
-        console.log(oz_orders[i].vendor)
-
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
             "filter": {
@@ -5268,7 +5266,7 @@ app.get('/test_features', async function(req, res){
         })
 
         for(let i = 24; i < products.length; i++) {
-            if(i%10 === 5 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
+            if(i%10 === 4 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
                 actual_products.push(products[i])
             }
         }
