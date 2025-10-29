@@ -7477,4 +7477,49 @@ app.get('/cdek_test/:from/:to', async function (req, res) {
     
 })
 
+app.get('/revenue', async (req, res) => {
+
+    let i = 0
+    let hasNext = true
+
+    const orders = []
+
+    while(hasNext) {
+
+        const response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+
+            "dir": "ASC",
+            "filter": {
+                "since": "2024-01-01T00:00:00.000Z",
+                "status": "delivered",
+                "to": "2024-12-31T23:59:59.999Z",
+            },
+            "limit": 1000,
+            "offset": i * 1000
+
+        }, {
+
+            headers: {
+
+                'Client-Id': process.env.OZON_CLIENT_ID,
+                'Api-Key': process.env.OZON_API_KEY
+
+            }
+
+        })
+
+        response.data.result.postings.forEach(el => {
+            orders.push(el)
+        })
+        hasNext = response.data.result.hasNext
+        i += 1
+
+    }
+    
+    console.log(orders.length)
+
+    res.json(orders)
+
+})
+
 app.listen(3030)
