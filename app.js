@@ -17,6 +17,14 @@ dotenv.config({path:__dirname + '/.env'})
 const dbsId = process.env.YANDEX_DBS_ID
 const fbsId = process.env.YANDEX_FBS_ID
 
+function findMatchesByPostingNumber(arr1, arr2) {
+  // создаём множество всех posting_number из второго массива
+  const set2 = new Set(arr2.map(item => item.posting_number));
+
+  // возвращаем только те элементы из первого массива, чей posting_number есть во втором
+  return arr1.filter(item => set2.has(item.posting_number));
+}
+
 function compareStrings(str1, str2) {
 
     if (str1.length !== str2.length) {
@@ -7482,7 +7490,9 @@ app.get('/revenue', async (req, res) => {
     let i = 0
     let hasNext = true
 
-    const orders = []
+    const REPORT_PATH = 'REPORT.xlsx'
+
+    let orders = []
 
     while(hasNext) {
 
@@ -7511,14 +7521,137 @@ app.get('/revenue', async (req, res) => {
         response.data.result.postings.forEach(el => {
             orders.push(el)
         })
-        hasNext = response.data.result.hasNext
+        hasNext = response.data.result.has_next
         i += 1
 
     }
-    
+
+    const accrualsList = []
+
+    const wb = new exl.Workbook()
+
+    await wb.xlsx.readFile(REPORT_PATH)
+
+    const ws = wb.getWorksheet('Начисления')
+
+    ws.eachRow((row, rowNumber) => {
+
+        if(rowNumber <= 2) return
+
+        const existingEntry = accrualsList.find(o => o.posting_number === row.getCell(1).value)
+
+        if(existingEntry) {
+
+            existingEntry.accruals.push({
+                accrual_name: row.getCell(4).value,
+                accrual_value: row.getCell(15).value
+            })
+
+        }
+
+        if(!existingEntry) {
+
+            accrualsList.push({
+                posting_number: row.getCell(1).value,
+                accruals: [
+                    {
+                        accrual_name: row.getCell(4).value,
+                        accrual_value: row.getCell(15).value
+                    }
+                ]
+            })
+
+        }
+
+    })
+
     console.log(orders.length)
 
-    res.json(orders)
+    orders.forEach(o => {
+
+        const rec = accrualsList.find(i => i.posting_number === o.posting_number)
+
+        if(!rec) return
+
+        if(rec) {
+
+            let _temp = 0
+
+            rec.accruals.forEach(a => {
+
+                _temp += a.accrual_value
+
+            })
+
+            o.revenue = Math.round(_temp)
+
+        }
+
+    })
+
+    orders = orders.filter(o => Object.hasOwn(o, 'revenue'))
+
+    console.log(orders.length)
+
+    let revenuesObject = {
+        sewingRevenue: 0,
+        mattressesRevenue: 0,
+        otherRevenue: 0,
+        totalRevenue: 0
+    }
+
+    let ordersObject = {
+        sewingOrders: [],
+        mattressesOrders: [],
+        otherOrders: []
+    }
+
+    orders.forEach(o => {
+
+        if (o.products.find(i => (i.name.toLowerCase().indexOf('постельно') >= 0 || i.name.toLowerCase().indexOf('простын') >= 0 || i.name.toLowerCase().indexOf('пододе') >= 0 || i.name.toLowerCase().indexOf('наволоч') >= 0) && i.name.toLowerCase().indexOf('матрас') < 0)) {
+
+            revenuesObject.sewingRevenue += o.revenue
+            ordersObject.sewingOrders.push(o)
+
+        }
+
+        if (o.products.find(i => (i.name.toLowerCase().indexOf('постельно') < 0 && i.name.toLowerCase().indexOf('простын') < 0 && i.name.toLowerCase().indexOf('пододе') < 0 && i.name.toLowerCase().indexOf('наволоч') < 0) && i.name.toLowerCase().indexOf('матрас') >= 0)) {
+
+            revenuesObject.mattressesRevenue += o.revenue
+            ordersObject.mattressesOrders.push(o)
+
+        }
+
+        if (o.products.find(i => (i.name.toLowerCase().indexOf('постельно') < 0 && i.name.toLowerCase().indexOf('простын') < 0 && i.name.toLowerCase().indexOf('пододе') < 0 && i.name.toLowerCase().indexOf('наволоч') < 0) && i.name.toLowerCase().indexOf('матрас') < 0)) {
+
+            revenuesObject.otherRevenue += o.revenue
+            ordersObject.otherOrders.push(o)
+
+        }
+
+        revenuesObject.totalRevenue += o.revenue
+
+    })
+
+    findMatchesByPostingNumber(ordersObject.sewingOrders, ordersObject.otherOrders).forEach(el => {
+
+        revenuesObject.totalRevenue += el.revenue
+
+    })
+
+    res.json(
+        {
+            orderTotals: {
+                sewing: ordersObject.sewingOrders.length,
+                mattresses: ordersObject.mattressesOrders.length,
+                other: ordersObject.otherOrders.length
+            },
+            revenueTotals: revenuesObject,
+            sewingProportion: revenuesObject.sewingRevenue / revenuesObject.totalRevenue * 100,
+            mattressesProportion: revenuesObject.mattressesRevenue / revenuesObject.totalRevenue * 100,
+            otherProportion: revenuesObject.otherRevenue / revenuesObject.totalRevenue * 100
+        }
+    )
 
 })
 
