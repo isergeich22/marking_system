@@ -2996,7 +2996,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     await wb.xlsx.readFile(ozonFile)
 
-    const ws_4 = wb.getWorksheet('Worksheet')
+    const ws_4 = wb.getWorksheet('products')
 
     const o_c1 = ws_4.getColumn(1)
 
