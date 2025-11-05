@@ -1427,7 +1427,7 @@ app.get('/ozon/:from', async function(req, res){
         'dir': 'asc',
         'filter': {
             'since':`${req.params.from}:00:00.000Z`,
-            'status':'awaiting_packaging',
+            'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
         'limit': 1000,
@@ -1485,7 +1485,7 @@ app.get('/ozon/:from', async function(req, res){
     oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
 
     for(let i = 0; i < oz_orders.length; i++) {
-
+        
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
             "filter": {
@@ -1920,7 +1920,7 @@ app.get('/ozon_marks_order/:from', async function(req, res){
         'dir': 'asc',
         'filter': {
             'since':`${req.params.from}:00:00.000Z`,
-            'status':'awaiting_packaging',
+            'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
         'limit': 1000,
