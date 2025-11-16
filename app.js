@@ -1367,6 +1367,272 @@ app.get('/ozon', async function(req, res){
 
 })
 
+app.get('/ozon_marks_order', async function(req, res){
+    
+    let oz_orders = []
+    const nat_cat = []
+    const gtins = []
+    let names = []
+
+    html = `${headerComponent}
+                    <title>Заказ маркировки - OZON</title>
+                </head>
+                <body>
+                    ${navComponent}
+                        <section class="sub-nav import-main">
+                            <div class="import-control">`
+
+    await renderImportButtons(buttons)
+    await renderMarkingButtons()
+    await renderExtraButtons()
+
+    html += `</section>`
+
+    const wb = new exl.Workbook()
+    
+    const fileName = './public/Краткий отчет.xlsx'    
+
+    await wb.xlsx.readFile(fileName)
+        
+    const nc_ws = wb.getWorksheet('Краткий отчет')
+
+    const nc_c1 = nc_ws.getColumn(1)
+
+    nc_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
+
+        if(rowNumber < 5) return
+        gtins.push(c.value)
+
+    })
+
+    const nc_c2 = nc_ws.getColumn(2)
+
+    nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
+
+        if(rowNumber < 5) return
+        nat_cat.push(c.value.trim())
+
+    })
+
+    let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+        
+        'dir': 'asc',
+        'filter': {
+            'since':`2025-01-01T00:00:00.000Z`,
+            'status':'awaiting_packaging',
+            'to':'2025-12-31T23:59:59.000Z'
+        },
+        'limit': 1000,
+        'offset':0
+
+    }, {
+
+        headers: {
+            'Host':'api-seller.ozon.ru',
+            'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+            'Api-Key':`${process.env.OZON_API_KEY}`,
+            'Content-Type':'application/json'
+        }
+
+    })
+
+    let result = response.data.result.postings
+
+    result = result.filter(o => {
+
+        if(o.delivery_method.id === 23463726191000) {
+
+            return o
+
+        }
+
+    })
+
+    result.forEach(el => {
+
+        for(let i = 0; i < el.products.length; i++) {
+
+            // console.log(el.products[i].offer_id)
+            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) >= 0) {
+
+                oz_orders.find(o => o.vendor === el.products[i].offer_id).quantity += Number(el.products[i].quantity)
+
+            }
+
+            // console.log(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id))
+
+            if(oz_orders.findIndex(o => o.vendor === el.products[i].offer_id) < 0) {
+
+                if(el.products[i].name.indexOf('белье') >= 0 || el.products[i].name.indexOf('бельё') >= 0) {
+
+                    oz_orders.push({
+                        'name': `КПБ ${el.products[i].name}`,
+                        'vendor': el.products[i].offer_id,
+                        'quantity': Number(el.products[i].quantity)
+                    })
+
+                }
+
+                if(el.products[i].name.indexOf('белье') < 0 && el.products[i].name.indexOf('бельё') < 0) {
+
+                    oz_orders.push({
+                        'name': el.products[i].name,
+                        'vendor': el.products[i].offer_id,
+                        'quantity': Number(el.products[i].quantity)
+                    })
+
+                }
+
+            }
+
+        }
+    })
+
+    oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('холстопрошивное') < 0)
+
+    html += `<section class="table">
+                    <div class="marks-table">
+                        <div class="marks-table-header">
+                            <div class="header-cell">Наименование</div>
+                            <div class="header-cell">Статус</div>                            
+                        </div>
+                    <div class="header-wrapper"></div>`
+
+    for(let i = 0; i < oz_orders.length; i++) {
+        html += `<div class="table-row">
+                    <span id="name">${oz_orders[i].name}</span>
+                    <span id="status-current">Актуальный товар</span>
+                    <span id="quantity">${oz_orders[i].quantity}</span>
+                 </div>`
+    }
+
+    html += `</section>
+             <div class="body-wrapper"></div>                        
+             ${footerComponent}`
+
+    function createNameList() {
+
+        let orderList = []
+        let _temp = []
+
+        for (let i = 0; i < oz_orders.length; i++) {
+
+            if(nat_cat.indexOf(oz_orders[i].name) >= 0) {
+
+                _temp.push(oz_orders[i].name)
+
+            }            
+            
+            if(_temp.length%10 === 0) {
+                if(_temp.length !== 0) {
+                    orderList.push(_temp)
+                }
+                _temp = []
+            }
+
+        }        
+
+        if(_temp.length !== 0) {
+            orderList.push(_temp)
+        }
+        _temp = []
+
+        return orderList
+
+    }
+
+    function createQuantityList() {
+
+        let quantityList = []
+        let temp = []
+
+        for(let i = 0; i < oz_orders.length; i++) {
+
+            if(nat_cat.indexOf(oz_orders[i].name) >= 0) {
+
+                temp.push(oz_orders[i].quantity)
+
+            }            
+
+            if(temp.length%10 === 0) {
+                if(temp.length !== 0) {
+                    quantityList.splice(-1, 0, ...quantityList.splice(-1, 1, temp))
+                }
+                temp = []
+            }
+
+        }
+
+        if(temp.length !== 0) {
+
+            quantityList.splice(-1, 0, ...quantityList.splice(-1, 1, temp))
+
+        }
+
+        return quantityList
+
+    }
+
+    function createOrder() {
+
+        let List = createNameList()
+        let Quantity = createQuantityList()
+        let content = ``
+
+        for(let i = 0; i < List.length; i++) {
+            if(List[i].length > 0) {
+                content += `<?xml version="1.0" encoding="utf-8"?>
+                            <order xmlns="urn:oms.order" xsi:schemaLocation="urn:oms.order schema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                                <lp>
+                                    <productGroup>lp</productGroup>
+                                    <contactPerson>333</contactPerson>
+                                    <releaseMethodType>REMARK</releaseMethodType>
+                                    <createMethodType>SELF_MADE</createMethodType>
+                                    <productionOrderId>OZON_${i+1}</productionOrderId>
+                                    <products>`
+                
+                    for(let j = 0; j < List[i].length; j++) {                
+                        if(nat_cat.indexOf(List[i][j]) >= 0) {
+                            content += `<product>
+                                            <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                            <quantity>${Quantity[i][j]}</quantity>
+                                            <serialNumberType>OPERATOR</serialNumberType>
+                                            <cisType>UNIT</cisType>
+                                            <templateId>10</templateId>
+                                        </product>`
+                        }
+                    }
+
+                content += `    </products>
+                            </lp>
+                        </order>`
+
+            }
+
+            const date_ob = new Date()
+
+            let month = date_ob.getMonth() + 1
+
+            let filePath = ''
+
+            month < 10 ? filePath = `./public/orders/lp_ozon_${i}_${date_ob.getDate()}_0${month}.xml` : filePath = `./public/orders/lp_ozon_${i}_${date_ob.getDate()}_${month}.xml`
+
+            if(content !== ``) {
+                fs.writeFileSync(filePath, content)
+            }
+
+            content = ``
+
+        }   
+
+    }
+
+    createOrder()
+
+    res.send(html)
+
+})
+
 app.get('/ozon/:from', async function(req, res){
 
     const nat_cat = []
