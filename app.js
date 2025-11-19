@@ -2469,6 +2469,8 @@ app.get('/wildberries', async function(req, res){
 
     for(let i = 0; i < wb_orders.length; i++) {
 
+        console.log(wb_orders[i].vendor)
+
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
             "filter": {
