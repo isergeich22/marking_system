@@ -2973,7 +2973,7 @@ app.get('/wildberries_marks_order', async function(req, res) {
 
         }
 
-        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('Наматрас') < 0)
+        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('Наматрас') < 0 && o.name.indexOf('Плед') < 0)
 
     }
 
@@ -3227,7 +3227,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    wbOrder = wbOrder.filter(o => o.orderProduct.indexOf('Матрас') < 0 && o.orderProduct.indexOf('Подушка') < 0 && o.orderProduct.indexOf('Одеяло') < 0 && o.orderProduct.indexOf('Ветошь') < 0 && o.orderProduct.indexOf('Наматра') < 0)
+    wbOrder = wbOrder.filter(o => o.orderProduct.indexOf('Матрас') < 0 && o.orderProduct.indexOf('Подушка') < 0 && o.orderProduct.indexOf('Одеяло') < 0 && o.orderProduct.indexOf('Ветошь') < 0 && o.orderProduct.indexOf('Наматра') < 0 && o.orderProduct.indexOf('Плед'))
 
     await wb.xlsx.readFile(marksTemplateFile)
 
