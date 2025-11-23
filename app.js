@@ -1694,7 +1694,7 @@ app.get('/ozon/:from', async function(req, res){
         
         'dir': 'asc',
         'filter': {
-            'since':`${req.params.from}:00:00.000Z`,
+            'since':`${req.params.from}:50:00.000Z`,
             'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
@@ -1753,6 +1753,8 @@ app.get('/ozon/:from', async function(req, res){
     oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
 
     for(let i = 0; i < oz_orders.length; i++) {
+
+        console.log(oz_orders[i].vendor)
         
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
