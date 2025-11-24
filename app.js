@@ -1694,7 +1694,7 @@ app.get('/ozon/:from', async function(req, res){
         
         'dir': 'asc',
         'filter': {
-            'since':`${req.params.from}:50:00.000Z`,
+            'since':`${req.params.from}:00:00.000Z`,
             'status':'awaiting_deliver',
             'to':'2025-12-31T23:59:59.000Z'
         },
