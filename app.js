@@ -5687,9 +5687,9 @@ app.get('/personal_orders', async function(req, res) {
 
         orderProducts.push({
 
-            name: row.values[2].richText[0].text.trim(),
+            name: row.values[2].trim(),
             quantity: row.values[1],
-            vendor: row.values[3].richText[0].text
+            vendor: row.values[3]
 
         })
 
