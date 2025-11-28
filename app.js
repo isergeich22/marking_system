@@ -3565,10 +3565,12 @@ app.get('/yandex', async function(req, res){
 
     }
 
-    // await getOrders(fbsId)
-    await getOrders(dbsId)
+    await getOrders(fbsId)
+    // await getOrders(dbsId)
 
     for(let i = 0; i < ya_orders.length; i++) {
+
+        console.log(ya_orders[i].vendor)
 
         const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
                     
