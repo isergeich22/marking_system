@@ -7759,12 +7759,12 @@ app.get('/cdek_test/:from/:to', async function (req, res) {
     
 })
 
-app.get('/revenue', async (req, res) => {
+app.get('/revenue/:year', async (req, res) => {
 
     let i = 0
     let hasNext = true
 
-    const REPORT_PATH = 'REPORT.xlsx'
+    const REPORT_PATH = `REPORT-${req.params.year}.xlsx`
 
     let orders = []
 
@@ -7774,9 +7774,9 @@ app.get('/revenue', async (req, res) => {
 
             "dir": "ASC",
             "filter": {
-                "since": "2024-01-01T00:00:00.000Z",
+                "since": `${req.params.year}-01-01T00:00:00.000Z`,
                 "status": "delivered",
-                "to": "2024-12-31T23:59:59.999Z",
+                "to": `${req.params.year}-12-31T23:59:59.999Z`,
             },
             "limit": 1000,
             "offset": i * 1000
@@ -7849,6 +7849,8 @@ app.get('/revenue', async (req, res) => {
 
         if(rec) {
 
+            console.log(rec)
+
             let _temp = 0
 
             rec.accruals.forEach(a => {
@@ -7861,7 +7863,9 @@ app.get('/revenue', async (req, res) => {
 
         }
 
-    })
+    })    
+
+    // res.json(orders)
 
     orders = orders.filter(o => Object.hasOwn(o, 'revenue'))
 
