@@ -91,6 +91,22 @@ async function renderExtraButtons() {
 
 }
 
+function splitArrayIntoChunks(arr, chunkSize = 100) {
+
+  if (!Array.isArray(arr)) throw new Error("Входные данные должны быть массивом")
+
+  if (arr.length <= chunkSize) return [arr]
+
+  const result = []
+
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    result.push(arr.slice(i, i + chunkSize))
+  }
+
+  return result
+
+}
+
 let buttons = ['ozon', 'wb', 'yandex', 'stocks']
 
 app.use(express.static(__dirname + '/public'))
@@ -6418,8 +6434,8 @@ app.get('/get_products_analytic/:year', async function (req, res) {
                         <table class="table is-fullwidth my-table">
                             <thead>
                                 <tr>
-                                    <th class="has-text-left">Продукт</th>
-                                    <th class="has-text-left">Количество</th>
+                                    <th class="has-text-left has-text-black">Продукт</th>
+                                    <th class="has-text-left has-text-black">Количество</th>
                                 </tr>
                             </thead>
                             <tbody>`
@@ -6427,8 +6443,8 @@ app.get('/get_products_analytic/:year', async function (req, res) {
     for(let key of Object.keys(analyticObject)) {
 
         html += `<tr>
-                    <td>${key}</td>
-                    <td>
+                    <td class="has-text-left has-text-black">${key}</td>
+                    <td class="has-text-left has-text-black">
                         ${analyticObject[key]} шт.
                     </td>
                 </tr>`
@@ -6548,67 +6564,67 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         for(let order of ordersList) {
 
-            if(order.products.find(o => o.name.indexOf('тенсел') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('тенсел') >= 0)) {
                 analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') < 0 && o.name.indexOf('жаккард') < 0 && o.name.indexOf('твил') < 0 && o.name.indexOf('поли') < 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') < 0 && o.name.toLowerCase().indexOf('жаккард') < 0 && o.name.toLowerCase().indexOf('твил') < 0 && o.name.toLowerCase().indexOf('поли') < 0)) {
                 analyticObject["Сатин"] = analyticObject["Сатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') >= 0)) {
                 analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('твил') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('твил') >= 0)) {
                 analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('поли') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('поли') >= 0)) {
                 analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('жаккард') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('жаккард') >= 0)) {
                 analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('бяз') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('бяз') >= 0)) {
                 analyticObject["Бязь"] = analyticObject["Бязь"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('варен') >= 0 || o.name.indexOf('варён') >= 0 || o.name.indexOf('хлоп') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('варен') >= 0 || o.name.toLowerCase().indexOf('варён') >= 0 || o.name.toLowerCase().indexOf('хлоп') >= 0)) {
                 analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('микрофибр') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('микрофибр') >= 0)) {
                 analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('мулетон') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('мулетон') >= 0)) {
                 analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
             }
             
-            if(order.products.find(o => o.name.indexOf('поплин') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('поплин') >= 0)) {
                 analyticObject["Поплин"] = analyticObject["Поплин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('перкал') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('перкал') >= 0)) {
                 analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('ранфор') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('ранфор') >= 0)) {
                 analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('микросатин') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('микросатин') >= 0)) {
                 analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('креп-ж') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('креп-ж') >= 0 || order.products.find(o => o.name.toLowerCase().indexOf('креп') >= 0))) {
                 analyticObject["Креп-жатка"] = analyticObject["Креп-жатка"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('креп-ж') < 0 && order.products.find(o => o.name.indexOf('жатка') >= 0))) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('жатка') >= 0 && order.products.find(o => o.name.toLowerCase().indexOf('креп') < 0))) {
                 analyticObject["Жатка"] = analyticObject["Жатка"] + 1
             }
 
@@ -6779,27 +6795,49 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         const uniqueOffers = [...new Set(rubberOffers)]
 
-        const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+        let data = []
 
-            "filter": {
-                "offer_id": uniqueOffers,
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
+        let responseCount = 0
+        let chuncksArray = []
 
-        }, {
-            headers: {
-                "Client-Id": process.env.OZON_CLIENT_ID,
-                "Api-Key": process.env.OZON_API_KEY
+        try {
+
+            if(uniqueOffers.length > 1000) {
+
+                responseCount = Math.ceil(uniqueOffers.length / 1000)
+                chuncksArray = splitArrayIntoChunks(uniqueOffers, 1000)
+
             }
-        })
 
-        const data = response.data.result
+            for(let i = 0; i < responseCount; i++) {
+
+                const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+                    "filter": {
+                        "offer_id": chuncksArray[i],
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
+
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
+
+                data = data.concat(response.data.result)
+
+            }            
+
+        } catch(err) {
+            console.error(err)
+        }        
 
         for(let i of data) {
 
-            console.log(i.attributes.find(o => o.id === 6771).values[0].value)
+            // console.log(i.attributes.find(o => o.id === 6771).values[0].value)
 
             if(String(i.attributes.find(o => o.id === 6771).values[0].value) in bedsheetSizes) {
 
@@ -7136,8 +7174,6 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         for(let i of dataColor) {
 
-            console.log(i.attributes.find(o => o.id === 10096).values[0].value)
-
             if(String(i.attributes.find(o => o.id === 10096).values[0].value) in bedsheetColors) {
 
                 bedsheetColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = bedsheetColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] + 1
@@ -7204,9 +7240,7 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
                 </div>
             ${footerComponent}`
 
-        // res.send(html)
-
-        res.json({data, rubberOffersCount})
+        res.send(html)
         
     }
 
@@ -7214,67 +7248,67 @@ app.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         for(let order of ordersList) {
 
-            if(order.products.find(o => o.name.indexOf('тенсел') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('тенсел') >= 0)) {
                 analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') < 0 && o.name.indexOf('жаккард') < 0 && o.name.indexOf('твил') < 0 && o.name.indexOf('поли') < 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') < 0 && o.name.toLowerCase().indexOf('жаккард') < 0 && o.name.toLowerCase().indexOf('твил') < 0 && o.name.toLowerCase().indexOf('поли') < 0)) {
                 analyticObject["Сатин"] = analyticObject["Сатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('страйп') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') >= 0)) {
                 analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('твил') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('твил') >= 0)) {
                 analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('поли') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('поли') >= 0)) {
                 analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('сатин') >= 0 && o.name.indexOf('жаккард') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('жаккард') >= 0)) {
                 analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('бяз') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('бяз') >= 0)) {
                 analyticObject["Бязь"] = analyticObject["Бязь"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('варен') >= 0 || o.name.indexOf('варён') >= 0 || o.name.indexOf('хлоп') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('варен') >= 0 || o.name.toLowerCase().indexOf('варён') >= 0 || o.name.toLowerCase().indexOf('хлоп') >= 0)) {
                 analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('микрофибр') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('микрофибр') >= 0)) {
                 analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('мулетон') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('мулетон') >= 0)) {
                 analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
             }
             
-            if(order.products.find(o => o.name.indexOf('поплин') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('поплин') >= 0)) {
                 analyticObject["Поплин"] = analyticObject["Поплин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('перкал') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('перкал') >= 0)) {
                 analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('ранфор') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('ранфор') >= 0)) {
                 analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('микросатин') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('микросатин') >= 0)) {
                 analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('креп-ж') >= 0)) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('креп-ж') >= 0 || order.products.find(o => o.name.toLowerCase().indexOf('креп') >= 0))) {
                 analyticObject["Креп-жатка"] = analyticObject["Креп-жатка"] + 1
             }
 
-            if(order.products.find(o => o.name.indexOf('креп-ж') < 0 && order.products.find(o => o.name.indexOf('жатка') >= 0))) {
+            if(order.products.find(o => o.name.toLowerCase().indexOf('жатка') >= 0 && order.products.find(o => o.name.toLowerCase().indexOf('креп') < 0))) {
                 analyticObject["Жатка"] = analyticObject["Жатка"] + 1
             }
 
