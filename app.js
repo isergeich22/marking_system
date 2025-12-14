@@ -14,6 +14,11 @@ let html = ``
 
 dotenv.config({path:__dirname + '/.env'})
 
+// const yandexID = {
+//     'dbs': process.env.YANDEX_DBS_ID,
+//     'fbs': process.env.YANDEX_FBS_ID
+// }
+
 const dbsId = process.env.YANDEX_DBS_ID
 const fbsId = process.env.YANDEX_FBS_ID
 
@@ -3581,8 +3586,8 @@ app.get('/yandex', async function(req, res){
 
     }
 
-    // await getOrders(fbsId)
-    await getOrders(dbsId)
+    await getOrders(fbsId)
+    // await getOrders(dbsId)
 
     for(let i = 0; i < ya_orders.length; i++) {
 
@@ -4017,6 +4022,8 @@ app.get('/yandex_marks_order', async function (req, res){
 
     })
 
+    let answer = null
+
     async function getOrders(clientId) {
 
         let response = await axios.get(`https://api.partner.market.yandex.ru/campaigns/${clientId}/orders?status=PROCESSING&substatus=STARTED&pageSize=50`, {
@@ -4026,6 +4033,10 @@ app.get('/yandex_marks_order', async function (req, res){
         })
 
         let result = response.data
+
+        console.log(result)
+
+        answer = result
 
         let currentPage = result.pager.currentPage
 
