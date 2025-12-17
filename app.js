@@ -1035,8 +1035,8 @@ app.get('/ozon', async function(req, res){
                                                 .replace(/\s+/g, ' '),
                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                'productType': 'ПОДОДЕЯЛЬНИК'
             })   
 
         }
@@ -1052,7 +1052,7 @@ app.get('/ozon', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
                 })
 
@@ -1067,7 +1067,7 @@ app.get('/ozon', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ'
                 })
 
@@ -1086,8 +1086,8 @@ app.get('/ozon', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             } else {
@@ -1099,8 +1099,8 @@ app.get('/ozon', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             }
@@ -1122,8 +1122,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1137,8 +1137,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1152,8 +1152,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1169,8 +1169,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -1190,8 +1190,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1205,8 +1205,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1220,8 +1220,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1237,8 +1237,8 @@ app.get('/ozon', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -1329,7 +1329,7 @@ app.get('/ozon', async function(req, res){
 
             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
             ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
             cellNumber++
@@ -1806,8 +1806,8 @@ app.get('/ozon/:from', async function(req, res){
                                                 .replace(/\s+/g, ' '),
                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                'productType': 'ПОДОДЕЯЛЬНИК'
             })   
 
         }
@@ -1823,7 +1823,7 @@ app.get('/ozon/:from', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
                 })
 
@@ -1838,7 +1838,7 @@ app.get('/ozon/:from', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ'
                 })
 
@@ -1857,8 +1857,8 @@ app.get('/ozon/:from', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             } else {
@@ -1870,8 +1870,8 @@ app.get('/ozon/:from', async function(req, res){
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             }
@@ -1893,8 +1893,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1908,8 +1908,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1923,8 +1923,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1940,8 +1940,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -1961,8 +1961,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1976,8 +1976,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -1991,8 +1991,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2008,8 +2008,8 @@ app.get('/ozon/:from', async function(req, res){
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -2100,7 +2100,7 @@ app.get('/ozon/:from', async function(req, res){
 
             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
             ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
             cellNumber++
@@ -2517,14 +2517,14 @@ app.get('/wildberries', async function(req, res){
         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
             names.push({            
-                'vendor': wb_orders[i].vendor,
+                'vendor': oz_orders[i].vendor,
                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                 .trim()                  // убрать пробелы по краям
                                                 .replace(/\s+/g, ' '),
                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                'productType': 'ПОДОДЕЯЛЬНИК'
             })   
 
         }
@@ -2534,13 +2534,13 @@ app.get('/wildberries', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
                 names.push({            
-                    'vendor': wb_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
                 })
 
@@ -2549,13 +2549,13 @@ app.get('/wildberries', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                 names.push({            
-                    'vendor': wb_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ'
                 })
 
@@ -2568,27 +2568,27 @@ app.get('/wildberries', async function(req, res){
             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
                 names.push({
-                    'vendor': wb_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             } else {
 
                 names.push({
-                    'vendor': wb_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             }
@@ -2604,14 +2604,14 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': wb_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2619,14 +2619,14 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': wb_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2634,14 +2634,14 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': wb_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2651,14 +2651,14 @@ app.get('/wildberries', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': wb_orders[i].vendor,
+                        'vendor': oz_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -2672,14 +2672,14 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': wb_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2687,14 +2687,14 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': wb_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2702,14 +2702,14 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': wb_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -2719,14 +2719,14 @@ app.get('/wildberries', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': wb_orders[i].vendor,
+                        'vendor': oz_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -2824,7 +2824,7 @@ app.get('/wildberries', async function(req, res){
 
             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
             ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
             cellNumber++
@@ -3616,14 +3616,14 @@ app.get('/yandex', async function(req, res){
         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
             names.push({            
-                'vendor': ya_orders[i].vendor,
+                'vendor': oz_orders[i].vendor,
                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                 .trim()                  // убрать пробелы по краям
                                                 .replace(/\s+/g, ' '),
                 'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                'productType': 'ПОДОДЕЯЛЬНИК'
             })   
 
         }
@@ -3633,13 +3633,13 @@ app.get('/yandex', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
                 names.push({            
-                    'vendor': ya_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
                 })
 
@@ -3648,13 +3648,13 @@ app.get('/yandex', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                 names.push({            
-                    'vendor': ya_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                     'productType': 'ПРОСТЫНЯ'
                 })
 
@@ -3667,27 +3667,27 @@ app.get('/yandex', async function(req, res){
             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
                 names.push({
-                    'vendor': ya_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА ПРЯМОУГОЛЬНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             } else {
 
                 names.push({
-                    'vendor': ya_orders[i].vendor,
+                    'vendor': oz_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
                     'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА КВАДРАТНАЯ'
+                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                    'productType': 'НАВОЛОЧКА'
                 })
 
             }
@@ -3703,14 +3703,14 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': ya_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -3718,14 +3718,14 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': ya_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -3733,14 +3733,14 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': ya_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -3750,14 +3750,14 @@ app.get('/yandex', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': ya_orders[i].vendor,
+                        'vendor': oz_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -3771,14 +3771,14 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': ya_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -3786,14 +3786,14 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': ya_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -3801,14 +3801,14 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': ya_orders[i].vendor,
+                            'vendor': oz_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -3818,14 +3818,14 @@ app.get('/yandex', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': ya_orders[i].vendor,
+                        'vendor': oz_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
                         'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ'
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                     })
 
                 }
@@ -3916,7 +3916,7 @@ app.get('/yandex', async function(req, res){
 
             ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
             ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
+            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
 
             cellNumber++
