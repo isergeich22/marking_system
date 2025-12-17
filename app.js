@@ -2517,7 +2517,7 @@ app.get('/wildberries', async function(req, res){
         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
             names.push({            
-                'vendor': oz_orders[i].vendor,
+                'vendor': wb_orders[i].vendor,
                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                 .trim()                  // убрать пробелы по краям
                                                 .replace(/\s+/g, ' '),
@@ -2534,7 +2534,7 @@ app.get('/wildberries', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
                 names.push({            
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': wb_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -2549,7 +2549,7 @@ app.get('/wildberries', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                 names.push({            
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': wb_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -2568,7 +2568,7 @@ app.get('/wildberries', async function(req, res){
             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
                 names.push({
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': wb_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -2581,7 +2581,7 @@ app.get('/wildberries', async function(req, res){
             } else {
 
                 names.push({
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': wb_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -2604,7 +2604,7 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': wb_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2619,7 +2619,7 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': wb_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2634,7 +2634,7 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': wb_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2651,7 +2651,7 @@ app.get('/wildberries', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': oz_orders[i].vendor,
+                        'vendor': wb_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2672,7 +2672,7 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': wb_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2687,7 +2687,7 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': wb_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2702,7 +2702,7 @@ app.get('/wildberries', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': wb_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -2719,7 +2719,7 @@ app.get('/wildberries', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': oz_orders[i].vendor,
+                        'vendor': wb_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3353,7 +3353,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     await wb.xlsx.readFile(marksFile)
 
-    const ws_5 = wb.getWorksheet('Sheet0')
+    const ws_5 = wb.getWorksheet('Worksheet')
 
     const ma_c1 = ws_5.getColumn(1)
 
@@ -3586,8 +3586,8 @@ app.get('/yandex', async function(req, res){
 
     }
 
-    await getOrders(fbsId)
-    // await getOrders(dbsId)
+    // await getOrders(fbsId)
+    await getOrders(dbsId)
 
     for(let i = 0; i < ya_orders.length; i++) {
 
@@ -3616,7 +3616,7 @@ app.get('/yandex', async function(req, res){
         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
             names.push({            
-                'vendor': oz_orders[i].vendor,
+                'vendor': ya_orders[i].vendor,
                 'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                 .trim()                  // убрать пробелы по краям
                                                 .replace(/\s+/g, ' '),
@@ -3633,7 +3633,7 @@ app.get('/yandex', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
                 names.push({            
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': ya_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -3648,7 +3648,7 @@ app.get('/yandex', async function(req, res){
             if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                 names.push({            
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': ya_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -3667,7 +3667,7 @@ app.get('/yandex', async function(req, res){
             if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
                 names.push({
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': ya_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -3680,7 +3680,7 @@ app.get('/yandex', async function(req, res){
             } else {
 
                 names.push({
-                    'vendor': oz_orders[i].vendor,
+                    'vendor': ya_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
@@ -3703,7 +3703,7 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': ya_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3718,7 +3718,7 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': ya_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3733,7 +3733,7 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': ya_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3750,7 +3750,7 @@ app.get('/yandex', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': oz_orders[i].vendor,
+                        'vendor': ya_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3771,7 +3771,7 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': ya_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3786,7 +3786,7 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': ya_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3801,7 +3801,7 @@ app.get('/yandex', async function(req, res){
                     if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                         names.push({
-                            'vendor': oz_orders[i].vendor,
+                            'vendor': ya_orders[i].vendor,
                             'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
@@ -3818,7 +3818,7 @@ app.get('/yandex', async function(req, res){
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
                     names.push({
-                        'vendor': oz_orders[i].vendor,
+                        'vendor': ya_orders[i].vendor,
                         'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                             .trim()                  // убрать пробелы по краям
                                                             .replace(/\s+/g, ' ')}`,
