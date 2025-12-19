@@ -1323,7 +1323,7 @@ app.get('/ozon', async function(req, res){
             
             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
             if(names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
@@ -2094,7 +2094,7 @@ app.get('/ozon/:from', async function(req, res){
             
             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
             if(names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
@@ -2818,7 +2818,7 @@ app.get('/wildberries', async function(req, res){
             
             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
             if(names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
@@ -3910,7 +3910,7 @@ app.get('/yandex', async function(req, res){
             
             if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
             if(names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
