@@ -956,7 +956,7 @@ app.get('/ozon', async function(req, res){
         'filter': {
             'since':`${new Date().getFullYear()}-01-01T00:00:00.000Z`,
             'status':'awaiting_packaging',
-            'to':'2025-12-31T23:59:59.000Z'
+            'to': `${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
         'limit': 1000,
         'offset':0
@@ -1440,9 +1440,9 @@ app.get('/ozon_marks_order', async function(req, res){
         
         'dir': 'asc',
         'filter': {
-            'since':`2025-01-01T00:00:00.000Z`,
+            'since':`${new Date().getFullYear()}-01-01T00:00:00.000Z`,
             'status':'awaiting_packaging',
-            'to':'2025-12-31T23:59:59.000Z'
+            'to':`${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
         'limit': 1000,
         'offset':0
@@ -1736,7 +1736,7 @@ app.get('/ozon/:from', async function(req, res){
         'filter': {
             'since':`${req.params.from}:00:00.000Z`,
             'status':'awaiting_deliver',
-            'to':'2025-12-31T23:59:59.000Z'
+            'to':`${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
         'limit': 1000,
         'offset':0
@@ -2232,7 +2232,7 @@ app.get('/ozon_marks_order/:from', async function(req, res){
         'filter': {
             'since':`${req.params.from}:00:00.000Z`,
             'status':'awaiting_deliver',
-            'to':'2025-12-31T23:59:59.000Z'
+            'to':`${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
         'limit': 1000,
         'offset':0
@@ -4173,13 +4173,13 @@ app.get('/yandex_marks_order', async function (req, res){
 
                         if(el.instances === undefined) {
 
-                            if(ya_orders.findIndex(o => o.name === el.offerName) >= 0) {
+                            if(ya_orders.findIndex(o => o.vendor === el.offerId) >= 0) {
 
-                                ya_orders.find(o => o.name === el.offerName).quantity += Number(el.count)
+                                ya_orders.find(o => o.vendor === el.offerId).quantity += Number(el.count)
 
                             }
 
-                            if(ya_orders.findIndex(o => o.name === el.offerName) < 0) {
+                            if(ya_orders.findIndex(o => o.vendor === el.offerId) < 0) {
 
                                 if(el.offerName.indexOf('белье') >= 0 || el.offerName.indexOf('бельё') >= 0) {
 
