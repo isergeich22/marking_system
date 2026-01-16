@@ -3413,7 +3413,7 @@ app.get('/wildberries/set_marks', async function (req, res){
 
     await wb.xlsx.readFile(marksFile)
 
-    const ws_5 = wb.getWorksheet('Worksheet')
+    const ws_5 = wb.getWorksheet(1)
 
     const ma_c1 = ws_5.getColumn(1)
 
