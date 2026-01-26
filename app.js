@@ -1327,9 +1327,16 @@ app.get('/ozon', async function(req, res){
             if(names.find(o => o.name === array[i]).cloth.includes('ТЕНСЕЛ')) ws.getCell(`L${cellNumber}`).value = '100% Лиоцелл'
             if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Лен'
             if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Хлопок'
-
             ws.getCell(`M${cellNumber}`).value = names.find(o => o.name === array[i]).size
-            ws.getCell(`N${cellNumber}`).value = '6302210000'
+            if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+
+                ws.getCell(`N${cellNumber}`).value = '6302310009'
+
+            } else {
+
+                ws.getCell(`N${cellNumber}`).value = '6302299000'
+
+            }
             ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`P${cellNumber}`).value = 'На модерации'                
 
@@ -2119,7 +2126,15 @@ app.get('/ozon/:from', async function(req, res){
             if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Хлопок'
 
             ws.getCell(`M${cellNumber}`).value = names.find(o => o.name === array[i]).size
-            ws.getCell(`N${cellNumber}`).value = '6302210000'
+            if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+
+                ws.getCell(`N${cellNumber}`).value = '6302310009'
+
+            } else {
+
+                ws.getCell(`N${cellNumber}`).value = '6302299000'
+
+            }
             ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`P${cellNumber}`).value = 'На модерации'                
 
@@ -2862,7 +2877,15 @@ app.get('/wildberries', async function(req, res){
             if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Хлопок'
 
             ws.getCell(`M${cellNumber}`).value = names.find(o => o.name === array[i]).size
-            ws.getCell(`N${cellNumber}`).value = '6302210000'
+            if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+
+                ws.getCell(`N${cellNumber}`).value = '6302310009'
+
+            } else {
+
+                ws.getCell(`N${cellNumber}`).value = '6302299000'
+
+            }
             ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`P${cellNumber}`).value = 'На модерации'                
 
@@ -3978,7 +4001,15 @@ app.get('/yandex', async function(req, res){
             if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Хлопок'
 
             ws.getCell(`M${cellNumber}`).value = names.find(o => o.name === array[i]).size
-            ws.getCell(`N${cellNumber}`).value = '6302210000'
+            if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+
+                ws.getCell(`N${cellNumber}`).value = '6302310009'
+
+            } else {
+
+                ws.getCell(`N${cellNumber}`).value = '6302299000'
+
+            }
             ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
             ws.getCell(`P${cellNumber}`).value = 'На модерации'                
 
