@@ -7803,9 +7803,10 @@ app.get('/get_income_analytic/:month/:product', async function (req, res) {
 
 app.get('/api_test', async function (req, res) {
 
-    let pageSize = 0
+    // let pageSize = 0
     let token = ''
     let result = []
+    let itterator = 0
 
     const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50`, {
         headers: {
@@ -7817,60 +7818,26 @@ app.get('/api_test', async function (req, res) {
     pageSize = ya_response.data.pager.pageSize
     token = ya_response.data.paging.nextPageToken
 
-    // while (pageSize === 50) {
+    while (itterator < 68) {
 
-    //     const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50&page_token=${token}`, {
-    //         headers: {
-    //             "Authorization": `Bearer ${process.env.YANDEX_API_KEY}`
-    //         }
-    //     })
+        console.log(token)
+        console.log(pageSize)
+        console.log(itterator)
 
-    //     result.push(ya_response.data.outlets)
-    //     pageSize = ya_response.data.pager.pageSize
-    //     token = ya_response.data.paging.nextPageToken
+        const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50&page_token=${token}`, {
+            headers: {
+                "Authorization": `Bearer ${process.env.YANDEX_API_KEY}`
+            }
+        })
 
-    // }
+        result.push(ya_response.data.outlets)
+        pageSize = ya_response.data.pager.pageSize
+        token = ya_response.data.paging.nextPageToken        
+        itterator++
 
-    // const ya_response = await axios.post('https://b2b-authproxy.taxi.yandex.net/api/b2b/platform/pickup-points/list', {
-    //     "geo_id": 5,
-    //     "type": "pickup_point",
-    //     "payment_method": "already_paid",
-    //     "available_for_dropoff": false,
-    //     "is_yandex_branded": false,
-    //     "is_not_branded_partner_station": false,
-    //     "is_post_office": false,
-    //     "payment_methods": [
-    //         "already_paid"
-    //     ],
-    //     "pickup_services": {
-    //         "is_fitting_allowed": false,
-    //         "is_partial_refuse_allowed": false,
-    //         "is_paperless_pickup_allowed": false,
-    //         "is_unboxing_allowed": false
-    //     }
-    // },{
-    //     headers: {
-    //         "Authorization": "Bearer y0__xDt8OShCBix9BwglviD3BQOak0tUo1gQM_yL80qweGmZnEfwg"
-    //     }
-    // })
+    }
 
-    // let ozResponse = await axios.post('https://api-seller.ozon.ru/v1/delivery-method/list', {
-    //     "filter": {
-    //         "status": "ACTIVE",
-    //         "warehouse_id": 21474696078000
-    //     },
-    //     "limit": 100,
-    //     "offset": 0
-    // }, {
-    //     headers: {
-    //         'Host':'api-seller.ozon.ru',
-    //         'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-    //         'Api-Key':`${process.env.OZON_API_KEY}`,
-    //         'Content-Type':'application/json'
-    //     }
-    // })
-
-    res.json({ yandex: ya_response.data })
+    res.json({ yandex: result })
     
 })
 
