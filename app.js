@@ -80,7 +80,7 @@ async function renderImportButtons(array) {
 
 async function renderMarkingButtons() {
     html += `<div class="marking-control">
-                <button class="marking-button remarking-button"><a href="http://localhost:3030/input_remarking" target="_blank">Ввод в оборот (Перемаркировка)</a></button>
+                <button class="marking-button remarking-button"><a href="http://localhost:3030/input_own" target="_blank">Ввод в оборот (Производство РФ)</a></button>
                 <button class="marking-button distance-button"><a href="http://localhost:3030/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
                 <button class="marking-button distance-button"><a href="http://localhost:3030/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
                 <button class="marking-button distance-button"><a href="http://localhost:3030/wildberries/set_marks" target="_blank">Подстановка маркировки (Wildberries)</a></button>
@@ -5062,7 +5062,7 @@ app.get('/stocks', async function(req, res){
 
 })
 
-app.get('/input_remarking', async function(req, res){
+app.get('/input_own', async function(req, res){
 
     html = `${headerComponent}
                     <title>Ввод в оборот. Производство РФ</title>
@@ -5110,26 +5110,44 @@ app.get('/input_remarking', async function(req, res){
 
     const ws = wb.getWorksheet(1)
 
-    let tnved = ''
+    ws.eachRow((row, rowNumber) => {
 
-    if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+        if (rowNumber < 3) {
 
-        ws.getCell(`N${cellNumber}`).value = '6302310009'
+            return
 
-    } else {
+        }
 
-        ws.getCell(`N${cellNumber}`).value = '6302299000'
+        if (rowNumber >= 3) {
+            
+            marks.push({
+                mark: row.values[1],
+                name: row.values[10]
+            })
 
-    }
+        }
 
-    ws.getColumn(1).eachCell(el => {
-        marks.push(el.value.trim())
     })
 
+    // console.log(marks)
+
+    let tnved = ''
+
     marks.forEach(el => {
-        if(el.length === 31) {
+
+        if(el.name.toUpperCase().indexOf('ЖАТКА') < 0 && el.name.toUpperCase().indexOf('КРЕП-ЖАТКА') < 0 && el.name.toUpperCase().indexOf('ПОЛИСАТИН') < 0 && el.name.toUpperCase().indexOf('ТЕНСЕЛ') < 0 && el.name.toUpperCase().indexOf('ЛЕН') < 0 && el.name.toUpperCase().indexOf('ЛЁН') < 0) {
+
+            tnved = '6302310009'
+
+        } else {
+
+            tnved = '6302299000'
+
+        }
+
+        if(el.mark.length === 31) {
             content += `<product>
-                            <ki>${el.mark}</ki>
+                            <ki><![CDATA[${el.mark}]]></ki>
                             <production_date>${production_date}</production_date>
                             <tnved_code>${tnved}</tnved_code>
                             <certificate_document_data>
@@ -5143,12 +5161,12 @@ app.get('/input_remarking', async function(req, res){
         }
     })
 
-    // console.log(content)   
+    // console.log(content)
 
     content += `    </products_list>
-            </remark>`
+            </introduce_rf>`
 
-    fs.writeFileSync('./public/inputinsale/remarking.xml', content)
+    fs.writeFileSync('./public/inputinsale/own.xml', content)
 
     html += `<div class="result">Файл remarking.xml успешно сформирован</div>
                 <section class="table">
@@ -5161,10 +5179,21 @@ app.get('/input_remarking', async function(req, res){
                         <div class="header-wrapper"></div>`
 
     marks.forEach(el => {
-        if(el.length === 31) {
+
+        if(el.name.toUpperCase().indexOf('ЖАТКА') < 0 && el.name.toUpperCase().indexOf('КРЕП-ЖАТКА') < 0 && el.name.toUpperCase().indexOf('ПОЛИСАТИН') < 0 && el.name.toUpperCase().indexOf('ТЕНСЕЛ') < 0 && el.name.toUpperCase().indexOf('ЛЕН') < 0 && el.name.toUpperCase().indexOf('ЛЁН') < 0) {
+
+            tnved = '6302310009'
+
+        } else {
+
+            tnved = '6302299000'
+
+        }
+
+        if(el.mark.length === 31) {
             html += `<div class="table-row">
-                        <span type="text" id="mark">${el.replace(/</g, '&lt;')}</span>
-                        <span id="name">6302100001</span>
+                        <span type="text" id="mark">${el.mark.replace(/</g, '&lt;')}</span>
+                        <span id="name">${tnved}</span>
                         <span id="name">РОССИЯ</span>
                      </div>`
         }
