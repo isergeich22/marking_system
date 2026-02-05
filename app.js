@@ -5065,7 +5065,7 @@ app.get('/stocks', async function(req, res){
 app.get('/input_remarking', async function(req, res){
 
     html = `${headerComponent}
-                    <title>Перемаркировка</title>
+                    <title>Ввод в оборот. Производство РФ</title>
                 </head>
                 <body>
                     ${navComponent}
@@ -5092,14 +5092,15 @@ app.get('/input_remarking', async function(req, res){
 
     day < 10 ? day = '0' + day : day
 
-    remark_date = year + '-' + month + '-' + day    
+    const production_date = year + '-' + month + '-' + day    
 
-    let content = `<?xml version="1.0" encoding="UTF-8"?>
-                    <remark version="7">
-                        <trade_participant_inn>372900043349</trade_participant_inn>
-                        <remark_date>${remark_date}</remark_date>
-                        <remark_cause>KM_SPOILED</remark_cause>
-                            <products_list>`    
+    let content = `<introduce_rf version="9">
+                    <trade_participant_inn>${process.env.ORG_INN}</trade_participant_inn>
+                    <producer_inn>${process.env.ORG_INN}</producer_inn>
+                    <owner_inn>${process.env.ORG_INN}</owner_inn>
+                    <production_date>${production_date}</production_date>
+                    <production_order>OWN_PRODUCTION</production_order>
+                        <products_list>`
 
     const marks = []
 
@@ -5109,6 +5110,18 @@ app.get('/input_remarking', async function(req, res){
 
     const ws = wb.getWorksheet(1)
 
+    let tnved = ''
+
+    if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+
+        ws.getCell(`N${cellNumber}`).value = '6302310009'
+
+    } else {
+
+        ws.getCell(`N${cellNumber}`).value = '6302299000'
+
+    }
+
     ws.getColumn(1).eachCell(el => {
         marks.push(el.value.trim())
     })
@@ -5116,9 +5129,16 @@ app.get('/input_remarking', async function(req, res){
     marks.forEach(el => {
         if(el.length === 31) {
             content += `<product>
-                            <new_ki><![CDATA[${el}]]></new_ki>
-                            <tnved_code_10>6302100001</tnved_code_10>
-                            <production_country>РОССИЯ</production_country>
+                            <ki>${el.mark}</ki>
+                            <production_date>${production_date}</production_date>
+                            <tnved_code>${tnved}</tnved_code>
+                            <certificate_document_data>
+                                <product>
+                                    <certificate_type>${process.env.CERT_TYPE}</certificate_type>
+                                    <certificate_number>${process.env.CERT_NUMBER}</certificate_number>
+                                    <certificate_date>${process.env.CERT_DATE}</certificate_date>
+                                </product>
+                            </certificate_document_data>
                         </product>`
         }
     })
