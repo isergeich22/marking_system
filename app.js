@@ -5782,6 +5782,34 @@ app.get('/test_features', async function(req, res){
 
     }
 
+    let dateString = ''
+
+    if(new Date().getDate() <= 9) {
+
+        dateString += `0${new Date().getDate()}-`
+
+    }
+
+    if(new Date().getDate() >= 10) {
+
+        dateString += `${new Date().getDate()}-`
+
+    }
+    
+    if(new Date().getMonth() <= 9) {
+
+        dateString += `0${new Date().getMonth() + 1}-`
+
+    }
+
+    if(new Date().getMonth() >= 10) {
+
+        dateString += `${new Date().getMonth() + 1}-`
+
+    }
+
+    dateString += `${new Date().getFullYear()}`
+
     async function updateShortReport() {
 
         const fileName = './public/Краткий отчет.xlsx'
@@ -5816,6 +5844,7 @@ app.get('/test_features', async function(req, res){
             const row = ws.getRow(cellNumber)
             row.getCell(1).value = newProducts[i].gtin
             row.getCell(2).value = newProducts[i].name
+            row.getCell(3).value = dateString
             row.commit()
 
             cellNumber++
