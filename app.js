@@ -6,7 +6,7 @@ const fs = require('fs')
 const fetch = require('node-fetch')
 const axios = require('axios')
 const dotenv = require('dotenv')
-const { headerComponent, navComponent, footerComponent } = require('./components/htmlComponents')
+const { headerComponent, navComponent, footerComponent, cryptoProPage } = require('./components/htmlComponents')
 const app = express()
 
 // Переменная для формирования html-разметки ответа
@@ -8160,6 +8160,18 @@ app.get('/revenue/:year', async (req, res) => {
             otherProportion: revenuesObject.otherRevenue / revenuesObject.totalRevenue * 100
         }
     )
+
+})
+
+app.get('/crpt_test', async (req, res) => {
+
+    const response = await axios.get('https://markirovka.crpt.ru/api/v3/true-api/auth/key', {
+        headers: {
+            "Accept": "application/json"
+        }
+    })
+
+    res.send(cryptoProPage)
 
 })
 
