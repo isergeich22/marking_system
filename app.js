@@ -2547,249 +2547,257 @@ app.get('/wildberries', async function(req, res){
 
         console.log(wb_orders[i].vendor)
 
-        const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-                    
-            "filter": {
-                "offer_id": [
-                    wb_orders[i].vendor
-                ],
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
+        try {
 
-        }, {
-            headers: {
-                'Host':'api-seller.ozon.ru',
-                'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-                'Api-Key':`${process.env.OZON_API_KEY}`,
-                'Content-Type':'application/json'
-            }
-        })
+            const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+                        
+                "filter": {
+                    "offer_id": [
+                        wb_orders[i].vendor
+                    ],
+                    "visibility": "ALL"
+                },
+                "limit": 1000,
+                "sort_dir": "ASC"
 
-        if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
+            }, {
+                headers: {
+                    'Host':'api-seller.ozon.ru',
+                    'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                    'Api-Key':`${process.env.OZON_API_KEY}`,
+                    'Content-Type':'application/json'
+                }
+            })
 
-            names.push({            
-                'vendor': wb_orders[i].vendor,
-                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                .trim()                  // убрать пробелы по краям
-                                                .replace(/\s+/g, ' '),
-                'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
-                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                'productType': 'ПОДОДЕЯЛЬНИК'
-            })   
-
-        }
-
-        if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
-
-            if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+            if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
                 names.push({            
                     'vendor': wb_orders[i].vendor,
                     'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
                                                     .trim()                  // убрать пробелы по краям
                                                     .replace(/\s+/g, ' '),
-                    'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+                    'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
-                })
+                    'productType': 'ПОДОДЕЯЛЬНИК'
+                })   
 
             }
 
-            if(response.data.result[0].name.indexOf('на резинке') < 0) {
-
-                names.push({            
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПРОСТЫНЯ'
-                })
-
-            }
-
-        }
-
-        if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
-
-            if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
-
-                names.push({
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА'
-                })
-
-            } else {
-
-                names.push({
-                    'vendor': wb_orders[i].vendor,
-                    'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                    .trim()                  // убрать пробелы по краям
-                                                    .replace(/\s+/g, ' '),
-                    'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
-                    'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                    'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'НАВОЛОЧКА'
-                })
-
-            }
-
-        }
-
-        if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
-
-            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+            if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
                 if(response.data.result[0].name.indexOf('на резинке') >= 0) {
 
-                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
-
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
-                        })
-
-                    }
-
-                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
-
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
-                        })
-
-                    }
-
-                    if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
-
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
-                        })
-
-                    }
+                    names.push({            
+                        'vendor': wb_orders[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+                    })
 
                 }
 
                 if(response.data.result[0].name.indexOf('на резинке') < 0) {
 
-                    names.push({
+                    names.push({            
                         'vendor': wb_orders[i].vendor,
-                        'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': response.data.result[0].attributes.find(o => o.id === 6771).values[0].value,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                        'productType': 'ПРОСТЫНЯ'
                     })
 
                 }
 
             }
 
-            if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+            if(response.data.result[0].name.indexOf('Наволочка') >= 0 || response.data.result[0].name.indexOf('наволочка') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
-
-                    if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
-
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
-                        })
-
-                    }
-
-                    if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
-
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
-                        })
-
-                    }
-
-                    if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
-
-                        names.push({
-                            'vendor': wb_orders[i].vendor,
-                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
-                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
-                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
-                        })
-
-                    }
-
-                }
-
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                if(response.data.result[0].name.indexOf('50х70') >= 0 || response.data.result[0].name.indexOf('40х60') >= 0 || response.data.result[0].name.indexOf('50 х 70') >= 0 || response.data.result[0].name.indexOf('40 х 60') >= 0 ) {
 
                     names.push({
                         'vendor': wb_orders[i].vendor,
-                        'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
-                                                            .trim()                  // убрать пробелы по краям
-                                                            .replace(/\s+/g, ' ')}`,
-                        'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                        'productType': 'НАВОЛОЧКА'
+                    })
+
+                } else {
+
+                    names.push({
+                        'vendor': wb_orders[i].vendor,
+                        'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                        .trim()                  // убрать пробелы по краям
+                                                        .replace(/\s+/g, ' '),
+                        'size': response.data.result[0].attributes.find(o => o.id === 6772).values[0].value,
+                        'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                        'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                        'productType': 'НАВОЛОЧКА'
                     })
 
                 }
 
             }
-            
+
+            if(response.data.result[0].name.indexOf('белье') >= 0 || response.data.result[0].name.indexOf('бельё') >= 0) {
+
+                if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
+
+                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                        if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                            names.push({
+                                'vendor': wb_orders[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                            names.push({
+                                'vendor': wb_orders[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х40') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                            names.push({
+                                'vendor': wb_orders[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                        })
+
+                    }
+
+                }
+
+                if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
+
+                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+
+                        if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
+
+                            names.push({
+                                'vendor': wb_orders[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х30 -') >= 0 ||response.data.result[0].name.indexOf('х 30 -') >= 0) {
+
+                            names.push({
+                                'vendor': wb_orders[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
+
+                            names.push({
+                                'vendor': wb_orders[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                    }
+
+                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+
+                        names.push({
+                            'vendor': wb_orders[i].vendor,
+                            'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                            'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                            'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                            'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase() === 'ТЕНСЕЛЬ' ? 'ТЕНСЕЛ' : response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                        })
+
+                    }
+
+                }
+                
+
+            }        
+
+            names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0)
+
+        } catch(err) {
+
+            console.log(`error: ${wb_orders[i].vendor}`)
 
         }
-
-        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0)
 
     }
 
