@@ -7890,40 +7890,153 @@ app.get('/get_income_analytic/:month/:product', async function (req, res) {
 app.get('/api_test', async function (req, res) {
 
     // let pageSize = 0
-    let token = ''
-    let result = []
-    let itterator = 0
+    // let token = ''
+    // let result = []
+    // let itterator = 0
 
-    const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50`, {
+    // const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50`, {
+    //     headers: {
+    //         "Authorization": `Bearer ${process.env.YANDEX_API_KEY}`
+    //     }
+    // })
+
+    // result.push(ya_response.data.outlets)
+    // pageSize = ya_response.data.pager.pageSize
+    // token = ya_response.data.paging.nextPageToken
+
+    // while (itterator < 68) {
+
+    //     console.log(token)
+    //     console.log(pageSize)
+    //     console.log(itterator)
+
+    //     const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50&page_token=${token}`, {
+    //         headers: {
+    //             "Authorization": `Bearer ${process.env.YANDEX_API_KEY}`
+    //         }
+    //     })
+
+    //     result.push(ya_response.data.outlets)
+    //     pageSize = ya_response.data.pager.pageSize
+    //     token = ya_response.data.paging.nextPageToken        
+    //     itterator++
+
+    // }
+
+    // res.json({ yandex: result })
+
+    let total = 0
+    let last_id = ''
+    let items = []
+    let counter = 0
+
+    const ozonResponse = await axios.post('https://api-seller.ozon.ru/v3/product/list', {
+        "filter": {
+            "visibility": "MANUAL_ARCHIVED"
+        },
+        "last_id": "",
+        "limit": 200
+    }, {
         headers: {
-            "Authorization": `Bearer ${process.env.YANDEX_API_KEY}`
+            'Host':'api-seller.ozon.ru',
+            'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+            'Api-Key':`${process.env.OZON_API_KEY}`,
+            'Content-Type':'application/json'
         }
     })
 
-    result.push(ya_response.data.outlets)
-    pageSize = ya_response.data.pager.pageSize
-    token = ya_response.data.paging.nextPageToken
+    total = ozonResponse.data.result.total
+    last_id = ozonResponse.data.result.last_id
 
-    while (itterator < 68) {
+    items.push(ozonResponse.data.result.items)
+    counter += ozonResponse.data.result.items.length
 
-        console.log(token)
-        console.log(pageSize)
-        console.log(itterator)
+    // console.log(total)
 
-        const ya_response = await axios.get(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/outlets?limit=50&page_token=${token}`, {
+    while(counter < total) {
+
+        const ozonResponse = await axios.post('https://api-seller.ozon.ru/v3/product/list', {
+            "filter": {
+                "visibility": "MANUAL_ARCHIVED"
+            },
+            "last_id": `${last_id}`,
+            "limit": 200
+        }, {
             headers: {
-                "Authorization": `Bearer ${process.env.YANDEX_API_KEY}`
+                'Host':'api-seller.ozon.ru',
+                'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                'Api-Key':`${process.env.OZON_API_KEY}`,
+                'Content-Type':'application/json'
             }
         })
 
-        result.push(ya_response.data.outlets)
-        pageSize = ya_response.data.pager.pageSize
-        token = ya_response.data.paging.nextPageToken        
-        itterator++
+        last_id = ozonResponse.data.result.last_id
+        items.push(ozonResponse.data.result.items)
+        counter += ozonResponse.data.result.items.length
 
     }
 
-    res.json({ yandex: result })
+    const skuArray = ['00-00185470']
+
+    // for(let i = 0; i < 5; i++) {
+
+    //     skuArray.push(ozonResponse.data.result.items[i].offer_id)
+
+    // }
+
+    // res.json(items)
+
+    const yaDbsStockResponse = await axios.put(`https://api.partner.market.yandex.ru/v2/campaigns/${dbsId}/offers/stocks`, {
+        "skus": [
+            {
+            "sku": `${skuArray[0]}`,
+            "items": [
+                {
+                    "count": 0,
+                    "updatedAt": "2026-02-24T00:00:00Z"
+                }
+            ]
+            }
+        ]
+    }, {
+        headers: {
+            'Authorization': `Bearer ${process.env.YANDEX_API_KEY}`
+        }
+    })
+
+    console.log(yaDbsStockResponse.data)
+
+    const yaFbsStockResponse = await axios.put(`https://api.partner.market.yandex.ru/v2/campaigns/${fbsId}/offers/stocks`, {
+        "skus": [
+            {
+            "sku": `${skuArray[0]}`,
+            "items": [
+                {
+                    "count": 0,
+                    "updatedAt": "2026-02-24T00:00:00Z"
+                }
+            ]
+            }
+        ]
+    }, {
+        headers: {
+            'Authorization': `Bearer ${process.env.YANDEX_API_KEY}`
+        }
+    })
+
+    console.log(yaFbsStockResponse.data)
+
+    const yaArchiveResponse = await axios.post(`https://api.partner.market.yandex.ru/v2/businesses/${process.env.YANDEX_BUSINESS_ID}/offer-mappings/archive`, {
+        "offerIds": [
+            skuArray[0]
+        ]
+    }, {
+        headers: {
+            'Authorization': `Bearer ${process.env.YANDEX_API_KEY}`
+        }
+    })
+
+    res.json(yaArchiveResponse.data)
     
 })
 
