@@ -108,7 +108,7 @@ h1{font-size:28px;font-weight:800;letter-spacing:-.8px;margin-bottom:8px;backgro
 <script src="cadesplugin_api.js"></script>
 <script>
 var STORE_CU=2,STORE_MY="My",STORE_MAX=2,FIND_SHA1=0,CHAIN=1,CADES_BES=1,B64BIN=1;
-var CFG={base:"https://markirovka.crpt.ru",keyPath:"/api/v3/true-api/auth/key",signPath:"/api/v3/true-api/auth/simpleSignIn"};
+var CFG={base:"",keyPath:"/api/v3/true-api/auth/key",signPath:"/api/v3/true-api/auth/simpleSignIn"};
 var app={};
 function log(m,t){var el=document.getElementById("log");var ts=new Date().toLocaleTimeString("ru-RU");var c=(t==="ok")?"log-ok":(t==="err")?"log-err":"log-info";var line=document.createElement("div");line.className="log-line";var a=document.createElement("span");a.className="log-time";a.textContent="["+ts+"] ";var b=document.createElement("span");b.className=c;b.textContent=m;line.appendChild(a);line.appendChild(b);el.appendChild(line);el.scrollTop=el.scrollHeight;}
 function clearLog(){document.getElementById("log").innerHTML="";}

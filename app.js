@@ -8,6 +8,7 @@ const axios = require('axios')
 const dotenv = require('dotenv')
 const { headerComponent, navComponent, footerComponent, cryptoProPage } = require('./components/htmlComponents')
 const app = express()
+app.use(express.json())
 
 // Переменная для формирования html-разметки ответа
 let html = ``
@@ -8285,15 +8286,29 @@ app.get('/revenue/:year', async (req, res) => {
 })
 
 app.get('/crpt_test', async (req, res) => {
-
-    const response = await axios.get('https://markirovka.crpt.ru/api/v3/true-api/auth/key', {
-        headers: {
-            "Accept": "application/json"
-        }
-    })
-
     res.send(cryptoProPage)
+})
 
+app.get('/api/v3/true-api/auth/key', async (req, res) => {
+    try {
+        const response = await axios.get('https://markirovka.crpt.ru/api/v3/true-api/auth/key', {
+            headers: { "Accept": "application/json" }
+        })
+        res.json(response.data)
+    } catch (e) {
+        res.status(e.response?.status || 500).json({ error: e.message })
+    }
+})
+
+app.post('/api/v3/true-api/auth/simpleSignIn', async (req, res) => {
+    try {
+        const response = await axios.post('https://markirovka.crpt.ru/api/v3/true-api/auth/simpleSignIn', req.body, {
+            headers: { "Content-Type": "application/json", "Accept": "application/json" }
+        })
+        res.json(response.data)
+    } catch (e) {
+        res.status(e.response?.status || 500).json({ error: e.message })
+    }
 })
 
 app.listen(3030)
