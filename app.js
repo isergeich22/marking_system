@@ -20,6 +20,8 @@ dotenv.config({path:__dirname + '/.env'})
 //     'fbs': process.env.YANDEX_FBS_ID
 // }
 
+let CRPT_TOKEN = ''
+
 const dbsId = process.env.YANDEX_DBS_ID
 const fbsId = process.env.YANDEX_FBS_ID
 
@@ -8289,6 +8291,23 @@ app.get('/crpt_test', async (req, res) => {
     res.send(cryptoProPage)
 })
 
+app.get('/crpt_api_test', async (req, res) => {
+
+    console.log(CRPT_TOKEN)
+
+    const response = await axios.get('https://markirovka.crpt.ru/api/v3/true-api/nk/short-product?gtin=04610594532618', 
+        {
+            headers: {
+                Accept: 'application/json',
+                Authorization: `Bearer ${CRPT_TOKEN}`
+            }
+        }
+    )
+
+    res.json(response.data)
+
+})
+
 app.get('/api/v3/true-api/auth/key', async (req, res) => {
     try {
         const response = await axios.get('https://markirovka.crpt.ru/api/v3/true-api/auth/key', {
@@ -8305,6 +8324,8 @@ app.post('/api/v3/true-api/auth/simpleSignIn', async (req, res) => {
         const response = await axios.post('https://markirovka.crpt.ru/api/v3/true-api/auth/simpleSignIn', req.body, {
             headers: { "Content-Type": "application/json", "Accept": "application/json" }
         })
+        CRPT_TOKEN = response.data.token
+        console.log(CRPT_TOKEN)
         res.json(response.data)
     } catch (e) {
         res.status(e.response?.status || 500).json({ error: e.message })
