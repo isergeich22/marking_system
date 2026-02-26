@@ -6407,6 +6407,8 @@ app.get('/personal_orders', async function(req, res) {
 
     function createOrder() {
 
+        let List = createNameList()
+        let Quantity = createQuantityList()
         let content = ``
 
         for(let i = 0; i < List.length; i++) {
@@ -6416,23 +6418,41 @@ app.get('/personal_orders', async function(req, res) {
                                 <lp>
                                     <productGroup>lp</productGroup>
                                     <contactPerson>333</contactPerson>
-                                    <releaseMethodType>REMARK</releaseMethodType>
+                                    <releaseMethodType>PRODUCTION</releaseMethodType>
                                     <createMethodType>SELF_MADE</createMethodType>
-                                    <productionOrderId>PERSONAL_${i+1}</productionOrderId>
+                                    <productionOrderId>OZON_${i+1}</productionOrderId>
                                     <products>`
                 
                     for(let j = 0; j < List[i].length; j++) {                
                         if(nat_cat.indexOf(List[i][j]) >= 0) {
-                            content += `<product>
-                                            <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
-                                            <quantity>${Quantity[i][j]}</quantity>
-                                            <serialNumberType>OPERATOR</serialNumberType>
-                                            <cisType>UNIT</cisType>
-                                            <templateId>10</templateId>
-                                        </product>`
+
+                            if(nat_cat[nat_cat.indexOf(List[i][j])].includes('КПБ')) {
+
+                                content += `<product>
+                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                                <quantity>${Quantity[i][j]}</quantity>
+                                                <serialNumberType>OPERATOR</serialNumberType>
+                                                <cisType>BUNDLE</cisType>
+                                                <templateId>10</templateId>
+                                            </product>`
+
+                            }
+                            
+                            if(nat_cat[nat_cat.indexOf(List[i][j])].indexOf('КПБ') < 0) {
+
+                                content += `<product>
+                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                                <quantity>${Quantity[i][j]}</quantity>
+                                                <serialNumberType>OPERATOR</serialNumberType>
+                                                <cisType>UNIT</cisType>
+                                                <templateId>10</templateId>
+                                            </product>`
+
+                            }
+
                         }
                     }
-                
+
                 content += `    </products>
                             </lp>
                         </order>`
