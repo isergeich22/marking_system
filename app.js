@@ -5947,7 +5947,7 @@ app.get('/personal_orders', async function(req, res) {
 
     for(let i = 0; i < orderProducts.length; i++) {
 
-        if(nat_cat.indexOf(orderProducts[i].name) < 0) {
+        if(nat_cat.find(o => orderProducts[i].name.indexOf(o) < 0) < 0) {
 
             difference.push(orderProducts[i])
 
@@ -5969,9 +5969,6 @@ app.get('/personal_orders', async function(req, res) {
 
     })
 
-    console.log(difference)
-    console.log(difference.length)
-
     difference = difference.filter((o) => {
 
         if(full_cat.findIndex(i => i.vendor === o.vendor) < 0) {
@@ -5981,8 +5978,6 @@ app.get('/personal_orders', async function(req, res) {
         }
 
     })
-
-    console.log(difference.length)
 
     let names = []
 
@@ -6250,7 +6245,7 @@ app.get('/personal_orders', async function(req, res) {
         }
 
     }
-    
+
     const new_items = []
 
     if(difference.length > 0) {
@@ -6278,28 +6273,28 @@ app.get('/personal_orders', async function(req, res) {
         for(let i = 0; i < array.length; i++) {
 
             ws.getCell(`A${cellNumber}`).value = 6302
-            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name === array[i]).name
+            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).name
             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
             ws.getCell(`D${cellNumber}`).value = 'Артикул'
-            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
-            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name === array[i]).productType
-            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).color
+            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).vendor
+            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).productType
+            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).color
             ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
 
-            if(names.find(o => o.name === array[i]).cloth === 'КРЕП-ЖАТКА' || names.find(o => o.name === array[i]).cloth === 'КРЕП ЖАТКА') ws.getCell(`I${cellNumber}`).value = 'КРЕП'
-            if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
-            if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-            if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
-            if(names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'КРЕП-ЖАТКА' || names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'КРЕП ЖАТКА') ws.getCell(`I${cellNumber}`).value = 'КРЕП'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЕН' || names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЕН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).cloth
             
-            if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
 
-            if(names.find(o => o.name === array[i]).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
-            if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
-            if(names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЕН' || names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
+            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЕН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
 
-            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).size
+            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).size
             ws.getCell(`L${cellNumber}`).value = '6302100001'
             ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
             ws.getCell(`N${cellNumber}`).value = 'На модерации'                
@@ -6361,7 +6356,17 @@ app.get('/personal_orders', async function(req, res) {
 
         for (let i = 0; i < orderProducts.length; i++) {
 
-                _temp.push(orderProducts[i].name)
+                if(orderProducts[i].name.indexOf('Постельн') >= 0) {
+
+                    _temp.push(`КПБ ${orderProducts[i].name}`)
+
+                }
+
+                if(orderProducts[i].name.indexOf('Постельн') < 0) {
+
+                    _temp.push(orderProducts[i].name)
+
+                }
             
                 if(_temp.length%10 === 0) {
                     orderList.push(_temp)
@@ -6385,6 +6390,19 @@ app.get('/personal_orders', async function(req, res) {
 
         for(let i = 0; i < orderProducts.length; i++) {
             
+            if(orderProducts[i].name.indexOf('Постельн') >= 0) {
+
+                if(nat_cat.indexOf(`КПБ ${orderProducts[i].name}`) >= 0) {
+                    temp.push(orderProducts.find(o => o.vendor === orderProducts[i].vendor).quantity)
+                }
+
+                if(temp.length%10 === 0) {
+                    quantityList.splice(-1, 0, ...quantityList.splice(-1, 1, temp))
+                    temp = []
+                }
+
+            }
+
             if(nat_cat.indexOf(orderProducts[i].name) >= 0) {
                 temp.push(orderProducts.find(o => o.vendor === orderProducts[i].vendor).quantity)
             }
@@ -6402,14 +6420,13 @@ app.get('/personal_orders', async function(req, res) {
 
     }
 
-    let List = createNameList()
-    let Quantity = createQuantityList()
-
     function createOrder() {
 
         let List = createNameList()
         let Quantity = createQuantityList()
         let content = ``
+
+        console.log(List)
 
         for(let i = 0; i < List.length; i++) {
             if(List[i].length > 0) {
@@ -6420,7 +6437,7 @@ app.get('/personal_orders', async function(req, res) {
                                     <contactPerson>333</contactPerson>
                                     <releaseMethodType>PRODUCTION</releaseMethodType>
                                     <createMethodType>SELF_MADE</createMethodType>
-                                    <productionOrderId>OZON_${i+1}</productionOrderId>
+                                    <productionOrderId>PERSONAL_${i+1}</productionOrderId>
                                     <products>`
                 
                     for(let j = 0; j < List[i].length; j++) {                
@@ -6507,6 +6524,9 @@ app.get('/personal_orders', async function(req, res) {
             ${footerComponent}`        
 
     }
+
+    console.log(difference.length)
+    console.log(new_items.length)
 
     if(new_items.length > 0) await createImport(new_items)
 
