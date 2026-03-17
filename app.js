@@ -5947,13 +5947,15 @@ app.get('/personal_orders', async function(req, res) {
 
     for(let i = 0; i < orderProducts.length; i++) {
 
-        if(nat_cat.find(o => orderProducts[i].name.indexOf(o) < 0) < 0) {
+        if(nat_cat.find(o => orderProducts[i].name.indexOf(o) < 0)) {
 
             difference.push(orderProducts[i])
 
         }
 
     }
+
+    console.log(difference)
 
     await workbook.xlsx.readFile(unloadFile)
 
@@ -5969,15 +5971,15 @@ app.get('/personal_orders', async function(req, res) {
 
     })
 
-    difference = difference.filter((o) => {
+    // difference = difference.filter((o) => {
 
-        if(full_cat.findIndex(i => i.vendor === o.vendor) < 0) {
+    //     if(full_cat.findIndex(i => i.vendor === o.vendor) < 0) {
 
-            return o
+    //         return o
 
-        }
+    //     }
 
-    })
+    // })
 
     let names = []
 
@@ -6257,6 +6259,8 @@ app.get('/personal_orders', async function(req, res) {
         })
 
     }
+
+    console.log(new_items)
 
     async function createImport(array) {
 
