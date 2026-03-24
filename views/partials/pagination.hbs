@@ -1,0 +1,16 @@
+<div class="pages">
+    <a id="begin" href="/home{{#if status}}/{{status}}{{/if}}">На первую страницу</a>
+    <div class="pages-prev">
+        <svg id="prev-icon" width="6" height="10" viewBox="0 0 6 10" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M4.113 9.669c.432.441 1.13.441 1.563 0a1.145 1.145 0 0 0 0-1.596L2.668 4.999l3.008-3.072a1.145 1.145 0 0 0 0-1.596 1.087 1.087 0 0 0-1.563 0l-3.79 3.87A1.14 1.14 0 0 0 0 5c0 .29.108.578.324.799l3.79 3.87z"></path>
+        </svg>
+        <a id="prev" href="">Предыдущая страница</a>
+    </div>
+    <div class="pages-next">
+        <a id="next" href="">Следующая страница</a>
+        <svg id="next-icon" width="6" height="10" viewBox="0 0 6 10" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M1.887.331a1.087 1.087 0 0 0-1.563 0 1.145 1.145 0 0 0 0 1.596l3.008 3.074L.324 8.073a1.145 1.145 0 0 0 0 1.596c.432.441 1.13.441 1.563 0l3.79-3.87A1.14 1.14 0 0 0 6 5c0-.29-.108-.578-.324-.799L1.886.332z"></path>
+        </svg>
+    </div>
+    <a id="last" class="pages-last" href="/home{{#if status}}/{{status}}{{/if}}?page={{lastPage}}">На последнюю страницу</a>
+</div>

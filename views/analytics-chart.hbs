@@ -1,0 +1,23 @@
+{{> sub-nav buttons=buttons}}
+
+<section class="table">
+    <div class="marks-table">
+        {{#if chartUrl}}
+        <div class="marks-table-header">
+            <img src="{{chartUrl}}">
+        </div>
+        {{/if}}
+        <div class="marks-table-header">
+            <div class="header-cell">{{col1}}</div>
+            <div class="header-cell">{{col2}}</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each rows}}
+        <div class="table-row">
+            <span>{{label}}</span>
+            <span>{{value}} шт.</span>
+        </div>
+        {{/each}}
+    </div>
+</section>
+<div class="body-wrapper"></div>

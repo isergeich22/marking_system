@@ -1,0 +1,24 @@
+{{> sub-nav buttons=buttons}}
+
+<section class="table">
+    <div class="marks-table">
+        <div class="marks-table-header">
+            <div class="header-cell">Номер заказа</div>
+            <div class="header-cell">Наименование</div>
+            <div class="header-cell">Сумма к начислению</div>
+            <div class="header-cell">Сумма заказа</div>
+            <div class="header-cell">% начисления</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each rows}}
+        <div class="table-row">
+            <span>{{postingNumber}}</span>
+            <span>{{name}}</span>
+            <span>{{amount}} руб.</span>
+            <span>{{accruals}} руб.</span>
+            <span>{{percent}} %</span>
+        </div>
+        {{/each}}
+    </div>
+</section>
+<div class="body-wrapper"></div>

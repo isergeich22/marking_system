@@ -1,0 +1,22 @@
+{{> sub-nav buttons=buttons}}
+
+<section class="table">
+    <div class="marks-table">
+        <div class="marks-table-header">
+            <div class="header-cell">Номер заказа WB</div>
+            <div class="header-cell">Наименование</div>
+            <div class="header-cell">Артикул</div>
+            <div class="header-cell">КИЗ</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each orders}}
+        <div class="table-row">
+            <span id="order">{{orderNumber}}</span>
+            <span id="product">{{orderProduct}}</span>
+            <span id="vendor">{{orderCode}}</span>
+            <span id="mark">{{mark}}</span>
+        </div>
+        {{/each}}
+    </div>
+</section>
+<div class="body-wrapper"></div>

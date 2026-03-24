@@ -1,4 +1,5 @@
 const express = require('express')
+const { engine } = require('express-handlebars')
 const dotenv = require('dotenv')
 const errorHandler = require('./middleware/errorHandler')
 
@@ -7,6 +8,18 @@ dotenv.config({ path: __dirname + '/.env' })
 const app = express()
 app.use(express.json())
 app.use(express.static(__dirname + '/public'))
+
+app.engine('hbs', engine({
+    extname: 'hbs',
+    defaultLayout: 'main',
+    layoutsDir: './views/layouts',
+    partialsDir: './views/partials',
+    helpers: {
+        eq: (a, b) => a === b,
+    }
+}))
+app.set('view engine', 'hbs')
+app.set('views', './views')
 
 app.use('/', require('./routes/home'))
 app.use('/', require('./routes/ozon'))

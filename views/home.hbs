@@ -1,0 +1,26 @@
+{{> sub-nav buttons=buttons}}
+{{> filter-control}}
+
+<section class="table">
+    <div class="marks-table">
+        <div class="marks-table-header">
+            <div class="header-cell">КИЗ</div>
+            <div class="header-cell">GTIN</div>
+            <div class="header-cell">Товар</div>
+            <div class="header-cell">Дата эмиссии</div>
+            <div class="header-cell">Статус</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each marks}}
+        <div class="table-row">
+            <span type="text" id="mark">{{mark}}</span>
+            <span id="gtin">{{gtin}}</span>
+            <span id="name">{{name}}</span>
+            <span id="date">{{date}}</span>
+            <span id="status">{{statusLabel}}</span>
+        </div>
+        {{/each}}
+    </div>
+    {{> pagination lastPage=lastPage status=status}}
+</section>
+<div class="body-wrapper"></div>

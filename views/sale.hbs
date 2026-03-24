@@ -1,0 +1,25 @@
+{{> sub-nav buttons=buttons}}
+
+<div class="result">Файл {{fileName}} успешно сформирован</div>
+<section class="table">
+    <div class="marks-table">
+        <div class="marks-table-header">
+            <div class="header-cell">КИЗ</div>
+            <div class="header-cell">Цена</div>
+            <div class="header-cell">Тип документа</div>
+            <div class="header-cell">Номер документа</div>
+            <div class="header-cell">Дата документа</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each rows}}
+        <div class="table-row">
+            <span type="text" id="mark">{{mark}}</span>
+            <span id="gtin">{{price}}</span>
+            <span id="name">CONSIGNMENT_NOTE</span>
+            <span id="status">{{consignmentNumber}}</span>
+            <span id="date">{{consignmentDate}}</span>
+        </div>
+        {{/each}}
+    </div>
+</section>
+<div class="body-wrapper"></div>

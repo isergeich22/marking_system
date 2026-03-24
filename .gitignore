@@ -1,0 +1,59 @@
+# Node.js
+node_modules/
+
+# Секреты
+.env
+
+# Логи
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+*.tmp
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Excel / бизнес-данные — не коммитим
+*.xlsx
+*.xls
+
+# Заказы
+orders/
+
+# Игнорировать всё по умолчанию, разрешить нужное явно
+*
+
+# Корневые файлы
+!app.js
+!config.js
+!package.json
+!package-lock.json
+!.gitignore
+
+# Модули приложения
+!routes/
+!routes/**
+!services/
+!services/**
+!helpers/
+!helpers/**
+!middleware/
+!middleware/**
+!components/
+!components/**
+
+# Шаблоны
+!views/
+!views/**
+
+# Статика
+!public/
+!public/actual_marks.html
+!public/Краткий отчет.xlsx
+!public/css/
+!public/css/**
+!public/img/
+!public/img/**

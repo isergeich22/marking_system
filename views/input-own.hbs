@@ -1,0 +1,20 @@
+{{> sub-nav buttons=buttons}}
+
+<div class="result">Файл remarking.xml успешно сформирован</div>
+<section class="table">
+    <div class="marks-table">
+        <div class="marks-table-header">
+            <div class="header-cell">КИЗ</div>
+            <div class="header-cell">Код ТНВЭД</div>
+            <div class="header-cell">Страна</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each marks}}
+        <div class="table-row">
+            <span type="text" id="mark">{{mark}}</span>
+            <span id="name">{{tnved}}</span>
+            <span id="name">РОССИЯ</span>
+        </div>
+        {{/each}}
+    </div>
+</section>

@@ -1,0 +1,27 @@
+{{> sub-nav buttons=buttons}}
+
+<section class="table">
+    <div class="marks-table">
+        <div class="marks-table-header">
+            <div class="header-cell">Наименование</div>
+            <div class="header-cell">Артикул</div>
+            <div class="header-cell">Статус</div>
+        </div>
+        <div class="header-wrapper"></div>
+        {{#each newItems}}
+        <div class="table-row">
+            <span id="name">{{name}}</span>
+            <span id="vendor">{{vendor}}</span>
+            <span id="status-new">Новый</span>
+        </div>
+        {{/each}}
+        {{#each currentItems}}
+        <div class="table-row">
+            <span id="name">{{name}}</span>
+            <span id="vendor">{{vendor}}</span>
+            <span id="status-current">Актуальный</span>
+        </div>
+        {{/each}}
+    </div>
+</section>
+<div class="body-wrapper"></div>

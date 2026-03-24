@@ -1,0 +1,29 @@
+<section class="sub-nav import-main">
+    <div class="import-control">
+        {{#each buttons}}
+            {{#if (eq this 'stocks')}}
+                <button class="button-import">
+                    <a href="/stocks" target="_blank">Создать импорт для остатков</a>
+                </button>
+            {{else if (eq this 'wb')}}
+                <button class="button-import">
+                    <a href="/wildberries" target="_blank">Создать импорт для {{this}}</a>
+                </button>
+            {{else}}
+                <button class="button-import">
+                    <a href="/{{this}}" target="_blank">Создать импорт для {{this}}</a>
+                </button>
+            {{/if}}
+        {{/each}}
+    </div>
+    <div class="marking-control">
+        <button class="marking-button remarking-button"><a href="/input_own" target="_blank">Ввод в оборот (Производство РФ)</a></button>
+        <button class="marking-button distance-button"><a href="/sale_ozon" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+        <button class="marking-button distance-button"><a href="/sale_wb" target="_blank">Вывод из оборота (Дистанционная продажа)</a></button>
+        <button class="marking-button distance-button"><a href="/wildberries/set_marks" target="_blank">Подстановка маркировки (Wildberries)</a></button>
+    </div>
+    <div class="other-control">
+        <button class="other-button mark-stocks"><a href="/test_features" target="_blank">Обновить краткий отчет</a></button>
+        <button class="other-button mark-stocks"><a href="/personal_orders" target="_blank">Создать персональный заказ</a></button>
+    </div>
+</section>
