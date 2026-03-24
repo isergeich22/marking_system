@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Ysabeau&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@500&family=Inter:wght@300;500&display=swap');
 
 * {
@@ -11,64 +10,47 @@ html {
     background-color: #fff !important;
 }
 
-.header {
-    width: 100%;
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+.navbar {
+    background: #555D67 !important;
+    box-shadow: 0 2px 8px rgba(34, 60, 80, 0.2);
+}
+
+.navbar-item, .navbar-link {
+    color: #fff !important;
     font-family: 'Arimo', sans-serif;
-    /* padding: 10px 15px; */
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    -webkit-box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
-    -moz-box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
-    box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);    
-    background: #555D67;
-    height: 60px;
+    font-size: 14px;
 }
 
-    .header nav {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        gap: 5%;
-    }
-
-        nav .nav-item, .nav-item > a, .nav-item > a:visited  {
-            font-size: 14px;
-            color: #fff;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        nav .nav-item:hover, .nav-item > a:hover {
-            color:#bcc435;
-        }
-
-            .active {
-                color:#ECF43F!important;
-            }
-
-        nav img {
-            width: 8%;
-        }
-
-.logo {
-    width: 80%;
-    margin: 0 auto;
-    text-align: center;
-    padding: 10px 15px;
+.navbar-item:focus, .navbar-item:focus-within,
+.navbar-item:hover, .navbar-item.is-active,
+.navbar-link:focus, .navbar-link:hover, .navbar-link.is-active {
+    background: transparent !important;
+    color: #bcc435 !important;
 }
 
-.sub-nav {
-    width: 100%;
-    display: flex;
-    height: 50px;
-    color: #555D67;
-    flex-direction: row;
+.navbar-link::after {
+    border-color: #fff !important;
 }
 
+.navbar-dropdown {
+    background: #555D67 !important;
+    border-top: 2px solid #bcc435 !important;
+}
+
+.navbar-dropdown .navbar-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.navbar-brand img {
+    max-height: 48px;
+}
+
+.navbar-burger span {
+    background-color: #fff !important;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
 .main, .order-main, .import-main {
     display: flex;
     width: 100%;
@@ -81,7 +63,7 @@ html {
     .import-main {
         flex-direction: column;
         justify-content: center;
-        align-items: center;        
+        align-items: center;
     }
 
         .import-main h1 {
@@ -89,59 +71,12 @@ html {
             padding: 10px 15px;
         }
 
-.import-control, .marking-control, .other-control {
-    width: 60%;
-    margin: 0 auto;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    font-family: 'Arimo', sans-serif;
-    flex-direction: row;
-    gap: 1%;
-}
-
-    .import-control, .marking-control, .other-control {
-        display: none;
-        width: 100%;
-    }
-
-    .button-import, .marking-button, .other-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 10%;
-        font-family: 'Inter', sans-serif;
-        color: #457FD7;
-        gap: 5%;
-        margin: 10px 0;
-        border: none;
-        background: #fff;
-    }
-
-        .button-import a, .marking-button a, .mark-stocks a {
-            text-decoration: none;
-            color: #457FD7
-        }
-
-        .button-import a:visited {
-            color: #457FD7;
-        }
-
-        .marking-button a:visited {
-            color: #457FD7
-        }
-
-        .mark-stocks a:visited {
-            color: #457FD7
-        }
-
-.new_items {
+/* ── Items panels ────────────────────────────────────────────────────────── */
+.new_items, .new_items_order {
     width: 49%;
     margin: 0 auto;
-    font-family: 'Ysabeau', sans-serif;
-    /* background: rgba(59, 59, 59, 0.534); */
+    font-family: 'Inter', sans-serif;
     padding: 10px 15px;
-    /* text-align: center; */
 }
 
     .new {
@@ -152,22 +87,12 @@ html {
         .new span {
             font-weight: bold;
             color: #a3000e;
-            /* font-size: 1.2rem; */
         }
 
-.new_items_order {
+.current_items, .current_items_order {
     width: 49%;
     margin: 0 auto;
-    font-family: 'Ysabeau', sans-serif;
-    /* background: rgba(59, 59, 59, 0.534); */
-    padding: 10px 15px;
-    /* text-align: center; */
-}
-
-.current_items {
-    width: 49%;
-    margin: 0 auto;
-    font-family: 'Ysabeau', sans-serif;
+    font-family: 'Inter', sans-serif;
     padding: 10px 15px;
 }
 
@@ -179,19 +104,12 @@ html {
         .current span {
             font-weight: bold;
             color: #a3000e;
-            /* font-size: 1.2rem; */
         }
 
-.current_items_order {
-    width: 49%;
-    margin: 0 auto;
-    font-family: 'Ysabeau', sans-serif;
-    padding: 10px 15px;
-}
-
+/* ── Filter controls ─────────────────────────────────────────────────────── */
 .filter-control {
     width: 100%;
-    display: flex;    
+    display: flex;
     padding: 0px 24px;
     gap: 1%;
 }
@@ -226,7 +144,7 @@ html {
             display: flex;
             width: 10%;
             border: none;
-            background: none;            
+            background: none;
         }
 
             #search svg {
@@ -234,19 +152,19 @@ html {
             }
 
     .multiple-list {
+        position: relative;
         display: flex;
         flex-direction: row;
         justify-content: flex-start;
         cursor: pointer;
         font-size: .9rem;
-        display: flex;
         width: 15%;
         font-family: 'Inter', sans-serif;
         height: 55px;
         border-radius: 8px;
         border: 1px solid #dce6f0;
         align-items: center;
-        color: #A6ABBC;        
+        color: #A6ABBC;
     }
 
         .multiple-status {
@@ -262,11 +180,12 @@ html {
             display: none;
             z-index: 2;
             position: absolute;
-            top: 167px;
-            left: 426px;
-            width: 13%;
+            top: 100%;
+            left: 0;
+            width: 100%;
             background-color: #fff;
-            height: 150px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 8px 8px;
         }
 
             .list {
@@ -286,34 +205,34 @@ html {
                     width: 100%;
                 }
 
-    .show-button {
+                .list-item:hover {
+                    background: #f5f7fa;
+                    cursor: pointer;
+                }
 
+    .show-button {
         display: none;
         border: none;
         border-radius: 8px;
-        background: #F6F42E;
+        background: #E8E520;
         font-family: 'Inter', sans-serif;
-
     }
 
         .show-button a {
-
             padding: 13px;
             color: #63666A;
             text-decoration: none;
             cursor: pointer;
-
         }
 
         .show-button a:visited {
-
             padding: 13px;
             color: #63666A;
             text-decoration: none;
             cursor: pointer;
-
         }
 
+/* ── Table ───────────────────────────────────────────────────────────────── */
 .table {
     width: 100%;
     background-color: #fff !important;
@@ -347,10 +266,10 @@ html {
             overflow: hidden;
         }
 
-         .--pinned {
+        .--pinned {
             background-color: #fff;
-            box-shadow: rgba(0, 0, 0, 0.04) -4px 7px 12px;            
-         }
+            box-shadow: rgba(0, 0, 0, 0.04) -4px 7px 12px;
+        }
 
             .header-cell {
                 display: flex;
@@ -414,7 +333,7 @@ html {
 
                 .table-row button {
                     border: none;
-                    background: #F6F42E;
+                    background: #E8E520;
                     height: 30px;
                     width: 38%;
                 }
@@ -431,23 +350,24 @@ html {
                     color: #63666A;
                 }
 
-                    #date, #name, #quantity {
+                    .col-date, .col-name, .col-quantity {
                         color: #5E6476;
                         font-weight: 300;
                     }
 
-                    #status, #status-new {
+                    .col-status {
                         color: #36AD60;
                     }
 
-                    #status-current {
+                    .col-status-current {
                         color: #F1A349;
                     }
 
-                    #status-moderation {
-                        color: #ffee00;
+                    .col-status-moderation {
+                        color: #e6d800;
                     }
 
+/* ── Pagination ──────────────────────────────────────────────────────────── */
     .pages {
         display: flex;
         flex-direction: row;
@@ -459,11 +379,11 @@ html {
         font-family: 'Inter', sans-serif;
         font-size: .8rem;
         font-weight: 500;
-    }        
+    }
 
         .disabled {
             color: #c4c6c9 !important;
-            cursor:text !important;
+            cursor: text !important;
         }
 
         .pages a {
@@ -519,6 +439,7 @@ html {
             color: #63666a;
         }
 
+/* ── Action form ─────────────────────────────────────────────────────────── */
 .action-form {
     width: 100%;
     padding: 24px 0px 13px 24px;
@@ -528,14 +449,14 @@ html {
 }
 
     #current-order, #new-order {
-        background: #F6F42E;
+        background: #E8E520;
         border: none;
         height: 65px;
         border-radius: 10px;
     }
 
     #current-order:hover, #new-order:hover {
-        box-shadow: 0px 4px 32px rgba(246, 244, 46, 0.5);
+        box-shadow: 0px 4px 32px rgba(232, 229, 32, 0.5);
     }
 
     #current-order a, #new-order a {
@@ -547,6 +468,7 @@ html {
         text-decoration: none;
     }
 
+/* ── Result ──────────────────────────────────────────────────────────────── */
 .result {
     width: 100%;
     font-family: 'Inter', sans-serif;
@@ -554,6 +476,7 @@ html {
     text-align: center;
 }
 
+/* ── Scroll-to-top button ────────────────────────────────────────────────── */
 .button-top {
     display: none;
     z-index: 2;
@@ -561,7 +484,7 @@ html {
     height: 48px;
     position: fixed;
     bottom: 30px;
-    right: 20px;        
+    right: 20px;
     border-radius: 50%;
     background-color: #fff;
     font-family: 'Inter', sans-serif;
@@ -581,6 +504,7 @@ html {
     height: 72px;
 }
 
+/* ── Convert form ────────────────────────────────────────────────────────── */
 .convert-form {
     width: 55%;
     display: flex;
@@ -627,7 +551,7 @@ html {
         align-items: center;
         justify-content: center;
         width: 17%;
-        background: #F6F42E;
+        background: #E8E520;
         border: none;
         height: 5.5vh;
         border-radius: 10px;
@@ -636,7 +560,7 @@ html {
     }
 
     .input-form__ref:hover {
-        box-shadow: 0px 4px 12px rgba(246, 244, 46, 0.5);
+        box-shadow: 0px 4px 12px rgba(232, 229, 32, 0.5);
     }
 
     .result-form__label {
@@ -647,3 +571,70 @@ html {
         padding: 0px 10px;
         font-family: 'Inter', sans-serif;
     }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .navbar-item.has-dropdown:hover .navbar-dropdown {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-control {
+        flex-direction: column;
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    .search-field,
+    .multiple-list {
+        width: 100%;
+    }
+
+    .marks-table {
+        padding: 0 8px;
+    }
+
+    .marks-table-header,
+    .table-row {
+        font-size: .75rem;
+        padding: 8px 0 8px 8px;
+        gap: 2%;
+    }
+
+    .header-cell,
+    .table-row span {
+        width: auto;
+        flex: 1;
+    }
+
+    .pages {
+        flex-wrap: wrap;
+        padding: 12px 8px;
+        gap: 4px;
+    }
+
+    .pages a,
+    .pages-next,
+    .pages-prev {
+        width: auto;
+        font-size: .75rem;
+    }
+
+    .convert-form {
+        width: 90%;
+    }
+
+    .input-form, .result-form {
+        flex-direction: column;
+    }
+
+    .input-form__input, .result-form__input {
+        width: 100%;
+    }
+
+    .input-form__ref {
+        width: 100%;
+        height: 48px;
+    }
+}

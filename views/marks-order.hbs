@@ -9,9 +9,9 @@
         <div class="header-wrapper"></div>
         {{#each orders}}
         <div class="table-row">
-            <span id="name">{{name}}</span>
-            <span id="status-current">Актуальный товар</span>
-            {{#if quantity}}<span id="quantity">{{quantity}}</span>{{/if}}
+            <span class="col-name">{{name}}</span>
+            <span class="col-status-current">Актуальный товар</span>
+            {{#if quantity}}<span class="col-quantity">{{quantity}}</span>{{/if}}
         </div>
         {{/each}}
     </div>

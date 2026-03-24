@@ -9,11 +9,11 @@
         <div class="header-wrapper"></div>
         {{#each items}}
         <div class="table-row">
-            <span id="name">{{name}}</span>
+            <span class="col-name">{{name}}</span>
             {{#if isNew}}
-                <span id="status-new">Новый товар</span>
+                <span class="col-status">Новый товар</span>
             {{else}}
-                <span id="status-current">Актуальный товар</span>
+                <span class="col-status-current">Актуальный товар</span>
             {{/if}}
         </div>
         {{/each}}

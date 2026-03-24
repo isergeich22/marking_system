@@ -10,15 +10,48 @@
     <title>{{title}}</title>
 </head>
 <body>
-    <header class="header">
-        <nav>
-            <img src="/img/chestnyj_znak.png" alt="честный знак">
-            <p class="nav-item" id="home"><a href="/home">Главная</a></p>
-            <p class="nav-item" id="import">Создание импорт-файлов</p>
-            <p class="nav-item" id="cis_actions">Действия с КИЗ</p>
-            <p class="nav-item" id="other_actions">Другие действия</p>
-        </nav>
-    </header>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/home">
+                <img src="/img/chestnyj_znak.png" alt="честный знак">
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNavbar">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="mainNavbar" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="/home">Главная</a>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">Импорт</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="/ozon" target="_blank">Создать импорт для Ozon</a>
+                        <a class="navbar-item" href="/wildberries" target="_blank">Создать импорт для WB</a>
+                        <a class="navbar-item" href="/yandex" target="_blank">Создать импорт для Яндекс</a>
+                        <a class="navbar-item" href="/stocks" target="_blank">Создать импорт для остатков</a>
+                    </div>
+                </div>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">Действия с КИЗ</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="/input_own" target="_blank">Ввод в оборот (Производство РФ)</a>
+                        <a class="navbar-item" href="/sale_ozon" target="_blank">Вывод из оборота — Ozon</a>
+                        <a class="navbar-item" href="/sale_wb" target="_blank">Вывод из оборота — WB</a>
+                        <a class="navbar-item" href="/wildberries/set_marks" target="_blank">Подстановка маркировки (WB)</a>
+                    </div>
+                </div>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">Другие действия</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="/test_features" target="_blank">Обновить краткий отчёт</a>
+                        <a class="navbar-item" href="/personal_orders" target="_blank">Создать персональный заказ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     {{{body}}}
 

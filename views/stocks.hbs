@@ -10,16 +10,16 @@
         <div class="header-wrapper"></div>
         {{#each newItems}}
         <div class="table-row">
-            <span id="name">{{name}}</span>
-            <span id="vendor">{{vendor}}</span>
-            <span id="status-new">Новый</span>
+            <span class="col-name">{{name}}</span>
+            <span class="col-vendor">{{vendor}}</span>
+            <span class="col-status">Новый</span>
         </div>
         {{/each}}
         {{#each currentItems}}
         <div class="table-row">
-            <span id="name">{{name}}</span>
-            <span id="vendor">{{vendor}}</span>
-            <span id="status-current">Актуальный</span>
+            <span class="col-name">{{name}}</span>
+            <span class="col-vendor">{{vendor}}</span>
+            <span class="col-status-current">Актуальный</span>
         </div>
         {{/each}}
     </div>
