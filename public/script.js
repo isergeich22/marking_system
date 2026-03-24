@@ -119,16 +119,16 @@ if(window.location.href.indexOf('filter') < 0 && window.location.href.indexOf('y
         prevIcon.style.fill = '#c4c6c9'
         prevIcon.style.cursor = 'text'
         if(window.location.href.indexOf('APPLIED') >= 0) {
-            nextButton.setAttribute('href', `http://localhost:3030/home/APPLIED?page=2`)
+            nextButton.setAttribute('href', `/home/APPLIED?page=2`)
         }
         if(window.location.href.indexOf('RETIRED') >= 0) {
-            nextButton.setAttribute('href', `http://localhost:3030/home/RETIRED?page=2`)
+            nextButton.setAttribute('href', `/home/RETIRED?page=2`)
         }
         if(window.location.href.indexOf('INTRODUCED') >= 0) {
-            nextButton.setAttribute('href', `http://localhost:3030/home/INTRODUCED?page=2`)
+            nextButton.setAttribute('href', `/home/INTRODUCED?page=2`)
         } 
         if(window.location.href.indexOf('APPLIED') < 0 && window.location.href.indexOf('RETIRED') < 0 && window.location.href.indexOf('INTRODUCED') < 0){
-            nextButton.setAttribute('href', `http://localhost:3030/home?page=2`)
+            nextButton.setAttribute('href', `/home?page=2`)
         }
 
             
@@ -141,20 +141,20 @@ if(window.location.href.indexOf('filter') < 0 && window.location.href.indexOf('y
         prevIcon.style.cursor = 'pointer'
 
         if(window.location.href.indexOf('APPLIED') >= 0) {
-            prevButton.setAttribute('href', `http://localhost:3030/home/APPLIED?page=${pageNumber - 1}`)
-            nextButton.setAttribute('href', `http://localhost:3030/home/APPLIED?page=${pageNumber + 1}`)
+            prevButton.setAttribute('href', `/home/APPLIED?page=${pageNumber - 1}`)
+            nextButton.setAttribute('href', `/home/APPLIED?page=${pageNumber + 1}`)
         }
         if(window.location.href.indexOf('INTRODUCED') >= 0) {
-            prevButton.setAttribute('href', `http://localhost:3030/home/INTRODUCED?page=${pageNumber - 1}`)
-            nextButton.setAttribute('href', `http://localhost:3030/home/INTRODUCED?page=${pageNumber + 1}`)
+            prevButton.setAttribute('href', `/home/INTRODUCED?page=${pageNumber - 1}`)
+            nextButton.setAttribute('href', `/home/INTRODUCED?page=${pageNumber + 1}`)
         }
         if(window.location.href.indexOf('RETIRED') >= 0) {
-            prevButton.setAttribute('href', `http://localhost:3030/home/RETIRED?page=${pageNumber - 1}`)
-            nextButton.setAttribute('href', `http://localhost:3030/home/RETIRED?page=${pageNumber + 1}`)
+            prevButton.setAttribute('href', `/home/RETIRED?page=${pageNumber - 1}`)
+            nextButton.setAttribute('href', `/home/RETIRED?page=${pageNumber + 1}`)
         }
         if(window.location.href.indexOf('APPLIED') < 0 && window.location.href.indexOf('RETIRED') < 0 && window.location.href.indexOf('INTRODUCED') < 0){
-            prevButton.setAttribute('href', `http://localhost:3030/home?page=${pageNumber - 1}`)
-            nextButton.setAttribute('href', `http://localhost:3030/home?page=${pageNumber + 1}`)
+            prevButton.setAttribute('href', `/home?page=${pageNumber - 1}`)
+            nextButton.setAttribute('href', `/home?page=${pageNumber + 1}`)
         }
 
     }
@@ -168,16 +168,16 @@ if(window.location.href.indexOf('filter') < 0 && window.location.href.indexOf('y
         nextIcon.style.fill = '#c4c6c9'
         nextIcon.style.cursor = 'text'
         if(window.location.href.indexOf('APPLIED') >= 0) {
-            prevButton.setAttribute('href', `http://localhost:3030/home/APPLIED?page=${lastPage - 1}`)
+            prevButton.setAttribute('href', `/home/APPLIED?page=${lastPage - 1}`)
         }
         if(window.location.href.indexOf('INTRODUCED') >= 0) {
-            prevButton.setAttribute('href', `http://localhost:3030/home/INTRODUCED?page=${lastPage - 1}`)
+            prevButton.setAttribute('href', `/home/INTRODUCED?page=${lastPage - 1}`)
         }
         if(window.location.href.indexOf('RETIRED') >= 0) {
-            prevButton.setAttribute('href', `http://localhost:3030/home/RETIRED?page=${lastPage - 1}`)
+            prevButton.setAttribute('href', `/home/RETIRED?page=${lastPage - 1}`)
         }
         if(window.location.href.indexOf('APPLIED') < 0 && window.location.href.indexOf('RETIRED') < 0 && window.location.href.indexOf('INTRODUCED') < 0){
-            prevButton.setAttribute('href', `http://localhost:3030/home?page=${lastPage - 1}`)
+            prevButton.setAttribute('href', `/home?page=${lastPage - 1}`)
         }
 
     }
@@ -201,19 +201,19 @@ if(window.location.href.indexOf('home') >= 0) {
             showButton.style.display = 'inline-block'
             if(multipleStatus.innerHTML == 'Нанесен') {
 
-                showAnchor.setAttribute('href', `http://localhost:3030/home/APPLIED`)
+                showAnchor.setAttribute('href', `/home/APPLIED`)
 
             }
 
             if(multipleStatus.innerHTML == 'В обороте') {
 
-                showAnchor.setAttribute('href', `http://localhost:3030/home/INTRODUCED`)
+                showAnchor.setAttribute('href', `/home/INTRODUCED`)
 
             }
 
             if(multipleStatus.innerHTML == 'Выбыл') {
 
-                showAnchor.setAttribute('href', `http://localhost:3030/home/RETIRED`)
+                showAnchor.setAttribute('href', `/home/RETIRED`)
 
             }
             
@@ -244,11 +244,11 @@ if(window.location.href.indexOf('yandex') < 0) {
         }
         
         if(searchField.value.length == 31) {   
-            showAnchor.setAttribute('href', `http://localhost:3030/filter?cis=${str}`)
+            showAnchor.setAttribute('href', `/filter?cis=${str}`)
         }
 
         if(searchField.value.length == 14) {
-            showAnchor.setAttribute('href', `http://localhost:3030/filter?gtin=${searchField.value}`)
+            showAnchor.setAttribute('href', `/filter?gtin=${searchField.value}`)
         }
 
     })

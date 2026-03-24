@@ -14,7 +14,7 @@ const headerComponent = `<!DOCTYPE html>
 const navComponent = `<header class="header">
                         <nav>
                             <img src="/img/chestnyj_znak.png" alt="честный знак">
-                            <p class="nav-item" id="home"><a href="http://localhost:3030/home">Главная</a></p>
+                            <p class="nav-item" id="home"><a href="/home">Главная</a></p>
                             <p class="nav-item" id="import">Создание импорт-файлов</p>
                             <p class="nav-item" id="cis_actions">Действия с КИЗ</p>
                             <p class="nav-item" id="other_actions">Другие действия</p>
