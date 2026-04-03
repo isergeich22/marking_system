@@ -123,6 +123,21 @@ router.get('/ozon', async function(req, res){
             }
         })
 
+        if(response.data.result[0].name.indexOf('Полотенц') >= 0) {
+
+            names.push({
+                'vendor': oz_orders[i].vendor,
+                'name': response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                .trim()                  // убрать пробелы по краям
+                                                .replace(/\s+/g, ' '),
+                'size': response.data.result[0].attributes.find(o => o.id === 6765).values[0].value,
+                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                'cloth': response.data.result[0].name.indexOf('махров') >= 0 ? 'МАХРОВАЯ ТКАНЬ' : '',
+                'productType': 'ПОЛОТЕНЦЕ'
+            })
+
+        }
+
         if(response.data.result[0].name.indexOf('Пододеяльник') >= 0) {
 
             names.push({
