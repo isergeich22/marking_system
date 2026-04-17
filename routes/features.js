@@ -55,15 +55,19 @@ router.get('/personal_orders', async function(req, res) {
 
     for(let i = 0; i < orderProducts.length; i++) {
 
-        if(nat_cat.find(o => orderProducts[i].name.indexOf(o) < 0)) {
+        let name = orderProducts[i].name
+
+        console.log(name)
+
+        // console.log(nat_cat.find(o => name.indexOf(o) >= 0))
+
+        if(!nat_cat.find(o => name.indexOf(o) >= 0)) {
 
             difference.push(orderProducts[i])
 
         }
 
     }
-
-    console.log(difference)
 
     await workbook.xlsx.readFile(unloadFile)
 
@@ -368,8 +372,6 @@ router.get('/personal_orders', async function(req, res) {
 
     }
 
-    console.log(new_items)
-
     async function createImport(array) {
 
         const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
@@ -384,8 +386,11 @@ router.get('/personal_orders', async function(req, res) {
 
         for(let i = 0; i < array.length; i++) {
 
+            console.log(array[i])
+            console.log(names.find(o => o.name == array[i]))
+
             ws.getCell(`A${cellNumber}`).value = 6302
-            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).name
+            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name.indexOf('Простыня бязь 150х220 - 120 - Белый') >= 0).name
             ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
             ws.getCell(`D${cellNumber}`).value = 'Артикул'
             ws.getCell(`E${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).vendor
