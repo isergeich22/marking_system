@@ -846,6 +846,7 @@ router.get('/wildberries/set_marks', async function (req, res){
         if(nat_cat.indexOf(el.orderProduct) < 0) {
 
             const item = ozon_cat.find(o => o.code === el.orderCode)
+
             _temp.push({
 
                 'name': el.orderProduct,
@@ -869,6 +870,8 @@ router.get('/wildberries/set_marks', async function (req, res){
     })
 
     _temp = _temp.filter(o => o.name.indexOf('Матрас') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Ветошь') < 0)
+
+    console.log(_temp)
 
     await wb.xlsx.readFile(marksFile)
 
@@ -904,19 +907,33 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     for(let i = 0; i < wbOrder.length; i++) {
 
+        console.log(wbOrder[i].orderProduct)
+
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
 
-        console.log(gtin)
-
-        const mark = marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').mark
-
-        if(mark) {
-
-            wbOrder[i].mark = mark
-            marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').status = 'used'
+        if(gtin === undefined) {            
+            
+            wbOrder[i].mark = ''
 
         } else {
-            return
+
+            console.log(gtin)
+
+            const mark = marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').mark
+
+            // console.log(mark)
+
+            if(mark) {
+
+                wbOrder[i].mark = mark
+                marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').status = 'used'
+
+            } else {
+                
+                wbOrder[i].mark = ''
+
+            }
+
         }
 
     }
