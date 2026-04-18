@@ -138,7 +138,6 @@ router.get('/sale_ozon', async function(req, res){
                         <trade_participant_inn>372900043349</trade_participant_inn>
                         <withdrawal_type>DISTANCE</withdrawal_type>
                         <withdrawal_date>${date_string}</withdrawal_date>
-                        <primary_document_type>CONSIGNMENT_NOTE</primary_document_type>
                         <products_list>`
 
     const wb = new exl.Workbook()
@@ -149,7 +148,7 @@ router.get('/sale_ozon', async function(req, res){
 
         await wb.xlsx.readFile(actualMarksFile)
 
-        const ws = wb.getWorksheet('Worksheet')
+        const ws = wb.getWorksheet('Sheet0')
 
         const [c1, c16] = [ws.getColumn(1), ws.getColumn(16)]
 
@@ -190,21 +189,21 @@ router.get('/sale_ozon', async function(req, res){
 
         await wb.xlsx.readFile(filePath)
 
-        const ws = wb.getWorksheet('TDSheet')
+        const ws = wb.getWorksheet('Лист_1')
 
-        const [c2, c3, c8] = [ws.getColumn(2), ws.getColumn(3), ws.getColumn(8)]
+        const [c2, c4, c7] = [ws.getColumn(2), ws.getColumn(4), ws.getColumn(7)]
 
         c2.eachCell(c => {
             let str = c.value
             consignmentDate.push(str.replace(str.substring(10), ''))
         })
 
-        c3.eachCell(c => {
+        c4.eachCell(c => {
             let str = c.value
             consignmentNumbers.push(str.replace('MT00-', ''))
         })
 
-        c8.eachCell(c => {
+        c7.eachCell(c => {
             consignmentTypes.push(c.value)
         })
 
@@ -240,34 +239,39 @@ router.get('/sale_ozon', async function(req, res){
 
         let orders = []
 
-        let response = await fetch('https://api-seller.ozon.ru/v3/posting/fbs/list', {
-            method: 'POST',
-            headers: {
-                'Host': 'api-seller.ozon.ru',
-                'Client-Id': '144225',
-                'Api-Key': 'c139ba7b-611a-4447-870c-f85d8e4ad9f8',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+        let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {            
                 'dir': 'asc',
                 'filter':{
-                    'since':'2023-08-01T00:00:00Z',
-                    'to':'2023-10-25T00:00:00Z',
-                    'status':'cancelled'
+                    'since':'2023-10-01T00:00:00Z',
+                    'to':'2023-12-31T00:00:00Z',
+                    'status':'delivered'
                 },
                 'limit':1000,
                 'offset':0
-            })
-        })
+            },
+            {
+                headers: {
+                    'Host': 'api-seller.ozon.ru',
+                    'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                    'Api-Key':`${process.env.OZON_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
 
-        let result = await response.json()
+        let result = response.data
+
+        console.log(result)
 
         result.result.postings.forEach(e => {
+            console.log(e.posting_number)
             let orderNumber = e.posting_number
             let products = []
             e.products.forEach(el => {
                 let marks = []
+                console.log(el)
                 el.mandatory_mark.forEach(elem => {
+                    if(!elem) marks.push('')
                     marks.push(elem)
                 })
                 products.push({
@@ -277,9 +281,13 @@ router.get('/sale_ozon', async function(req, res){
                 })
             })
 
-            let obj = {
-                orderNumber: orderNumber,
-                productsList: products
+            if(products.find(o => o.marksList.indexOf('') < 0)) {
+                
+                let obj = {
+                    orderNumber: orderNumber,
+                    productsList: products
+                }
+
             }
 
             orders.push(obj)
@@ -373,7 +381,6 @@ router.get('/sale_wb', async function(req, res){
                         <trade_participant_inn>372900043349</trade_participant_inn>
                         <withdrawal_type>DISTANCE</withdrawal_type>
                         <withdrawal_date>${date_string}</withdrawal_date>
-                        <primary_document_type>CONSIGNMENT_NOTE</primary_document_type>
                         <products_list>`
 
     // let response = await fetch('https://suppliers-api.wildberries.ru/api/v3/orders?limit=10&next=0&dateFrom=1687755600&dateTo=1688187600',{
@@ -438,9 +445,9 @@ router.get('/sale_wb', async function(req, res){
 
         await wb.xlsx.readFile(consignmentsPath)
 
-        const ws = wb.getWorksheet('TDSheet')
+        const ws = wb.getWorksheet('Лист_1')
 
-        const [c2, c3, c8] = [ws.getColumn(2), ws.getColumn(3), ws.getColumn(8)]
+        const [c2, c4, c7] = [ws.getColumn(2), ws.getColumn(4), ws.getColumn(7)]
 
         const [consDates, consNumbers, orderNumbers, wbNumbers] = [[], [], [], [], []]
 
@@ -454,19 +461,25 @@ router.get('/sale_wb', async function(req, res){
             consDates.push(`${date[2]}-${date[1]}-${date[0]}`)
         })
 
-        c3.eachCell(c => {
-            consNumbers.push(c.value.slice(c.value.indexOf('-')+1))
+        // console.log(consDates)
+
+        c4.eachCell(c => {
+            consNumbers.push(c.value.trim().replace('MT00-0', ''))
         })
 
-        c8.eachCell(c => {
-            numbers.push(c.value)
+        c7.eachCell(c => {
+            if(c.value == null) {
+                numbers.push(c.value)
+            }
+            // console.log(c.value)
             if(c.value != null) {
-                wbNumbers.push(c.value)
-                orderNumbers.push(c.value.substring(3))
+                numbers.push(c.value.trim().replace('WB ', '').replace('WB-', '').replace('ozon ', ''))
+                wbNumbers.push(c.value.trim().replace('WB ', '').replace('WB-', '').replace('ozon ', ''))
+                orderNumbers.push(c.value.trim().replace('WB ', '').replace('WB-', '').replace('ozon ', ''))
             }
         })
 
-
+        console.log(wbNumbers)
 
         for(let i = 0; i < orderNumbers.length; i++) {
 
@@ -489,7 +502,7 @@ router.get('/sale_wb', async function(req, res){
     consignments = await getConsignments()
 
     // console.log(orders)
-    // console.log(consignments)
+    console.log(consignments)
 
     let equals = []
 
