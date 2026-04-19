@@ -36,7 +36,7 @@ async function getMonthlyMarks() {
 
     await wb.xlsx.readFile('./public/actual_marks.xlsx')
 
-    const ws = wb.getWorksheet('Worksheet')
+    const ws = wb.getWorksheet('Sheet0')
 
     const [c1, c2, c16, c23] = [ws.getColumn(1), ws.getColumn(2), ws.getColumn(16), ws.getColumn(23)]
 
@@ -59,7 +59,7 @@ async function getMonthlyMarks() {
     })
 
     c16.eachCell(c => {
-        if(c.value != null && c.value != 'status') {
+        if(c.value != null && c.value != 'Статус кода') {
             actual_status.push(c.value)
         }
     })
