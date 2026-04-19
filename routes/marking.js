@@ -144,219 +144,257 @@ router.get('/sale_ozon', async function(req, res){
 
     async function getActualList() {
 
-        const [marks, status] = [[], []]
+        const marks = []
 
         await wb.xlsx.readFile(actualMarksFile)
 
         const ws = wb.getWorksheet('Sheet0')
 
-        const [c1, c16] = [ws.getColumn(1), ws.getColumn(16)]
+        ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 
-        c1.eachCell(c => {
-            marks.push(c.value)
+            if(rowNumber < 3) return
+            marks.push({
+                mark: row.values[1],
+                product: row.values[10]
+            })
+
         })
 
-        c16.eachCell(c => {
-            status.push(c.value)
-        })
-
-        const introduced_marks = []
-
-        marks.forEach(e => {
-            if(status[marks.indexOf(e)] == 'INTRODUCED') {
-                introduced_marks.push(e)
-            }
-        })
+        return marks
 
     }
 
-    await getActualList()
+    const marks = await getActualList()
+
+    async function getOrdersFromXLSX(path) {
+        
+        const orders = []        
+
+        await wb.xlsx.readFile(path)
+
+        const ws = wb.getWorksheet('Worksheet')
+        
+        const seen = new Set()
+
+        ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+
+            if(rowNumber < 2) return
+
+            const val = row.getCell(2).value
+            seen.add(val)
+
+            if(orders.find(o => o.number === row.values[2].trim())) {
+
+                orders.find(o => o.number === row.values[2].trim()).products.push(row.values[12].trim())
+
+            } else {
+
+                orders.push({
+                    number: row.values[2],
+                    products: [row.values[12]]
+                })
+
+            }
+
+        })
+
+        const unique = [...seen]
+
+        return [orders, unique]
+
+    }
+
+    const answer = await getOrdersFromXLSX('./public/postings.xlsx')
+
+    const matches = []
+
+    res.json({orders: answer[0], marks: marks})
 
     //получаем данные из xlsx файла с реализациями и
     //формируем массив объектов реализаций
 
-    async function getConsignments() {
+    // async function getConsignments() {
 
-        let consignments = []
+    //     let consignments = []
 
-        const consignmentDate = []
+    //     const consignmentDate = []
 
-        const consignmentNumbers = []
+    //     const consignmentNumbers = []
 
-        const consignmentTypes = []
+    //     const consignmentTypes = []
 
-        const filePath = './public/distance/релизации.xlsx'
+    //     const filePath = './public/distance/релизации.xlsx'
 
-        await wb.xlsx.readFile(filePath)
+    //     await wb.xlsx.readFile(filePath)
 
-        const ws = wb.getWorksheet('Лист_1')
+    //     const ws = wb.getWorksheet('Лист_1')
 
-        const [c2, c4, c7] = [ws.getColumn(2), ws.getColumn(4), ws.getColumn(7)]
+    //     const [c2, c4, c7] = [ws.getColumn(2), ws.getColumn(4), ws.getColumn(7)]
 
-        c2.eachCell(c => {
-            let str = c.value
-            consignmentDate.push(str.replace(str.substring(10), ''))
-        })
+    //     c2.eachCell(c => {
+    //         let str = c.value
+    //         consignmentDate.push(str.replace(str.substring(10), ''))
+    //     })
 
-        c4.eachCell(c => {
-            let str = c.value
-            consignmentNumbers.push(str.replace('MT00-', ''))
-        })
+    //     c4.eachCell(c => {
+    //         let str = c.value
+    //         consignmentNumbers.push(str.replace('MT00-', ''))
+    //     })
 
-        c7.eachCell(c => {
-            consignmentTypes.push(c.value)
-        })
+    //     c7.eachCell(c => {
+    //         consignmentTypes.push(c.value)
+    //     })
 
-        let noRepeatConsignmentTypes = []
+    //     let noRepeatConsignmentTypes = []
 
-        for(let i = 0; i < consignmentTypes.length; i++) {
-            if(consignmentTypes[i] != null && consignmentTypes[i].indexOf('ozon') >= 0 && noRepeatConsignmentTypes.indexOf(consignmentTypes[i]) < 0) {
-                noRepeatConsignmentTypes.push(consignmentTypes[i])
-            }
-        }
+    //     for(let i = 0; i < consignmentTypes.length; i++) {
+    //         if(consignmentTypes[i] != null && consignmentTypes[i].indexOf('ozon') >= 0 && noRepeatConsignmentTypes.indexOf(consignmentTypes[i]) < 0) {
+    //             noRepeatConsignmentTypes.push(consignmentTypes[i])
+    //         }
+    //     }
 
-        for(let i = 0; i < consignmentDate.length; i++) {
-            let _tempArray = consignmentDate[i].split('.')
-            let str = `${_tempArray[2]}-${_tempArray[1]}-${_tempArray[0]}`
-            consignmentDate[i] = str
-        }
+    //     for(let i = 0; i < consignmentDate.length; i++) {
+    //         let _tempArray = consignmentDate[i].split('.')
+    //         let str = `${_tempArray[2]}-${_tempArray[1]}-${_tempArray[0]}`
+    //         consignmentDate[i] = str
+    //     }
 
-        for(let i = 0; i < noRepeatConsignmentTypes.length; i++) {
-            consignments.push({
-                orderNumber: noRepeatConsignmentTypes[i].substring(5),
-                consignmentNumber: consignmentNumbers[consignmentTypes.indexOf(noRepeatConsignmentTypes[i])],
-                consignmentDate: consignmentDate[consignmentTypes.indexOf(noRepeatConsignmentTypes[i])]
-            })
-        }
+    //     for(let i = 0; i < noRepeatConsignmentTypes.length; i++) {
+    //         consignments.push({
+    //             orderNumber: noRepeatConsignmentTypes[i].substring(5),
+    //             consignmentNumber: consignmentNumbers[consignmentTypes.indexOf(noRepeatConsignmentTypes[i])],
+    //             consignmentDate: consignmentDate[consignmentTypes.indexOf(noRepeatConsignmentTypes[i])]
+    //         })
+    //     }
 
-        return consignments
+    //     return consignments
 
-    }
+    // }
 
-    consignments = await getConsignments()
+    // consignments = await getConsignments()
 
-    async function getOrders() {
+    // async function getOrders() {
 
-        let orders = []
+    //     let orders = []
 
-        let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {            
-                'dir': 'asc',
-                'filter':{
-                    'since':'2023-10-01T00:00:00Z',
-                    'to':'2023-12-31T00:00:00Z',
-                    'status':'delivered'
-                },
-                'limit':1000,
-                'offset':0
-            },
-            {
-                headers: {
-                    'Host': 'api-seller.ozon.ru',
-                    'Client-Id':`${process.env.OZON_CLIENT_ID}`,
-                    'Api-Key':`${process.env.OZON_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        )
+    //     let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {            
+    //             'dir': 'asc',
+    //             'filter':{
+    //                 'since':'2023-10-01T00:00:00Z',
+    //                 'to':'2023-12-31T00:00:00Z',
+    //                 'status':'delivered'
+    //             },
+    //             'limit':1000,
+    //             'offset':0
+    //         },
+    //         {
+    //             headers: {
+    //                 'Host': 'api-seller.ozon.ru',
+    //                 'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+    //                 'Api-Key':`${process.env.OZON_API_KEY}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         }
+    //     )
 
-        let result = response.data
+    //     let result = response.data
 
-        console.log(result)
+    //     console.log(result)
 
-        result.result.postings.forEach(e => {
-            console.log(e.posting_number)
-            let orderNumber = e.posting_number
-            let products = []
-            e.products.forEach(el => {
-                let marks = []
-                console.log(el)
-                el.mandatory_mark.forEach(elem => {
-                    if(!elem) marks.push('')
-                    marks.push(elem)
-                })
-                products.push({
-                    name: el.name,
-                    marksList: marks,
-                    price: el.price
-                })
-            })
+    //     result.result.postings.forEach(e => {
+    //         console.log(e.posting_number)
+    //         let orderNumber = e.posting_number
+    //         let products = []
+    //         e.products.forEach(el => {
+    //             let marks = []
+    //             console.log(el)
+    //             el.mandatory_mark.forEach(elem => {
+    //                 if(!elem) marks.push('')
+    //                 marks.push(elem)
+    //             })
+    //             products.push({
+    //                 name: el.name,
+    //                 marksList: marks,
+    //                 price: el.price
+    //             })
+    //         })
 
-            if(products.find(o => o.marksList.indexOf('') < 0)) {
+    //         if(products.find(o => o.marksList.indexOf('') < 0)) {
                 
-                let obj = {
-                    orderNumber: orderNumber,
-                    productsList: products
-                }
+    //             let obj = {
+    //                 orderNumber: orderNumber,
+    //                 productsList: products
+    //             }
 
-            }
+    //         }
 
-            orders.push(obj)
+    //         orders.push(obj)
 
-        })
+    //     })
 
-        return orders
+    //     return orders
 
-    }
+    // }
 
-    orders = await getOrders()
+    // orders = await getOrders()
 
-    orders.forEach(e => {
-        console.log(e.orderNumber)
-    })
+    // orders.forEach(e => {
+    //     console.log(e.orderNumber)
+    // })
 
-    let equals = []
+    // let equals = []
 
-    for(let i = 0; i < orders.length; i++) {
-        for(let j = 0; j < consignments.length; j++) {
-            if(orders[i].orderNumber == consignments[j].orderNumber) {
-                equals.push(orders[i])
-            }
-        }
-    }
+    // for(let i = 0; i < orders.length; i++) {
+    //     for(let j = 0; j < consignments.length; j++) {
+    //         if(orders[i].orderNumber == consignments[j].orderNumber) {
+    //             equals.push(orders[i])
+    //         }
+    //     }
+    // }
 
-    equals.forEach(e => {
-        e.productsList.forEach(el => {
-            if(el.marksList.length > 0) {
-                if(el.marksList.indexOf('') < 0) {
-                    for(let i = 0; i < el.marksList.length; i++) {
-                        content += `<product>
-                                        <cis><![CDATA[${el.marksList[i]}]]></cis>
-                                        <cost>${(el.price).replace(el.price.substring(el.price.indexOf('.')), '')}00</cost>
-                                        <primary_document_type>CONSIGNMENT_NOTE</primary_document_type>
-                                        <primary_document_number>${(consignments.find(c => c.orderNumber == e.orderNumber)).consignmentNumber}</primary_document_number>
-                                        <primary_document_date>${(consignments.find(c => c.orderNumber == e.orderNumber)).consignmentDate}</primary_document_date>
-                                    </product>`
-                    }
-                }
-            }
-        })
-    })
+    // equals.forEach(e => {
+    //     e.productsList.forEach(el => {
+    //         if(el.marksList.length > 0) {
+    //             if(el.marksList.indexOf('') < 0) {
+    //                 for(let i = 0; i < el.marksList.length; i++) {
+    //                     content += `<product>
+    //                                     <cis><![CDATA[${el.marksList[i]}]]></cis>
+    //                                     <cost>${(el.price).replace(el.price.substring(el.price.indexOf('.')), '')}00</cost>
+    //                                     <primary_document_type>CONSIGNMENT_NOTE</primary_document_type>
+    //                                     <primary_document_number>${(consignments.find(c => c.orderNumber == e.orderNumber)).consignmentNumber}</primary_document_number>
+    //                                     <primary_document_date>${(consignments.find(c => c.orderNumber == e.orderNumber)).consignmentDate}</primary_document_date>
+    //                                 </product>`
+    //                 }
+    //             }
+    //         }
+    //     })
+    // })
 
-    content += `</products_list>
-            </withdrawal>`
+    // content += `</products_list>
+    //         </withdrawal>`
 
-    const fileName = `./public/distance/ozon_distance_${date_string}.xml`
+    // const fileName = `./public/distance/ozon_distance_${date_string}.xml`
 
-    fs.writeFileSync(fileName, content)
+    // fs.writeFileSync(fileName, content)
 
-    const rows = []
-    equals.forEach(e => {
-        e.productsList.forEach(el => {
-            if(el.marksList.length > 0 && el.marksList.indexOf('') < 0) {
-                for(let i = 0; i < el.marksList.length; i++) {
-                    const cons = consignments.find(c => c.orderNumber == e.orderNumber)
-                    rows.push({
-                        mark: el.marksList[i].replace(/</g, '&lt;'),
-                        price: `${(el.price).replace(el.price.substring(el.price.indexOf('.')), '')}00`,
-                        consignmentNumber: cons.consignmentNumber,
-                        consignmentDate: cons.consignmentDate
-                    })
-                }
-            }
-        })
-    })
+    // const rows = []
+    // equals.forEach(e => {
+    //     e.productsList.forEach(el => {
+    //         if(el.marksList.length > 0 && el.marksList.indexOf('') < 0) {
+    //             for(let i = 0; i < el.marksList.length; i++) {
+    //                 const cons = consignments.find(c => c.orderNumber == e.orderNumber)
+    //                 rows.push({
+    //                     mark: el.marksList[i].replace(/</g, '&lt;'),
+    //                     price: `${(el.price).replace(el.price.substring(el.price.indexOf('.')), '')}00`,
+    //                     consignmentNumber: cons.consignmentNumber,
+    //                     consignmentDate: cons.consignmentDate
+    //                 })
+    //             }
+    //         }
+    //     })
+    // })
 
-    res.render('sale', { title: 'Вывод из оборота — Ozon', fileName: fileName.substring(fileName.lastIndexOf('/') + 1), rows, buttons })
+    // res.render('sale', { title: 'Вывод из оборота — Ozon', fileName: fileName.substring(fileName.lastIndexOf('/') + 1), rows, buttons })
 
 })
 
