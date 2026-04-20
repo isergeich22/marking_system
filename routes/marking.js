@@ -619,7 +619,7 @@ router.get('/test_features', async function(req, res){
 
         const spans = content('span')
 
-        const divs = content('.jDMyyj')
+        const divs = content('.bjGCrJ')
 
         spans.each((i, elem) => {
             products.push(content(elem).text())
