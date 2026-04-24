@@ -421,7 +421,7 @@ router.get('/ozon', async function(req, res){
 
             }
             ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
-            ws.getCell(`P${cellNumber}`).value = 'На модерации'
+            ws.getCell(`P${cellNumber}`).value = 'Черновик'
 
             cellNumber++
 
@@ -1144,7 +1144,7 @@ router.get('/ozon/:from', async function(req, res){
 
             }
             ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
-            ws.getCell(`P${cellNumber}`).value = 'На модерации'
+            ws.getCell(`P${cellNumber}`).value = 'Черновик'
 
             cellNumber++
 
