@@ -157,8 +157,6 @@ router.get('/get_products_analytic/:year', async function (req, res) {
 
 router.get('/get_products_analytic/:year/:product', async function (req, res) {
 
-    const List = []
-
     const year = req.params.year
     let ordersList = []
 
@@ -686,23 +684,29 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         const uniqueOffersStandart = [...new Set(standartOffers)]
 
-        const responseStandart = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+        let dataStandart = []
 
-            "filter": {
-                "offer_id": uniqueOffersStandart,
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
+        if (uniqueOffersStandart.length > 0) {
+            const chunksStandart = splitArrayIntoChunks(uniqueOffersStandart, 1000)
 
-        }, {
-            headers: {
-                "Client-Id": process.env.OZON_CLIENT_ID,
-                "Api-Key": process.env.OZON_API_KEY
+            for (let chunk of chunksStandart) {
+                const responseStandart = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+                    "filter": {
+                        "offer_id": chunk,
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
+
+                dataStandart = dataStandart.concat(responseStandart.data.result)
             }
-        })
-
-        const dataStandart = responseStandart.data.result
+        }
 
         for(let i of dataStandart) {
 
@@ -789,67 +793,29 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         const uniqueOffersColor = [...new Set(orderOffers)]
 
-        if(uniqueOffersColor.length > 1000) {
+        let dataColor = []
 
-            let temp = []
+        if (uniqueOffersColor.length > 0) {
+            const chunksColor = splitArrayIntoChunks(uniqueOffersColor, 1000)
 
-            for(let i = 0; i < 1000; i++) {
+            for (let chunk of chunksColor) {
+                const responseColor = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+                    "filter": {
+                        "offer_id": chunk,
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
 
-                temp.push(uniqueOffersColor[i])
-
+                dataColor = dataColor.concat(responseColor.data.result)
             }
-
-            List.push(temp)
-
-            temp = []
-
-            for(let i = 1000; i < uniqueOffersColor.length; i++) {
-
-                temp.push(uniqueOffersColor[i])
-
-            }
-
-            List.push(temp)
-
         }
-
-        const responseColorFirst = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-
-            "filter": {
-                "offer_id": List[0],
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
-
-        }, {
-            headers: {
-                "Client-Id": process.env.OZON_CLIENT_ID,
-                "Api-Key": process.env.OZON_API_KEY
-            }
-        })
-
-        let first = responseColorFirst.data.result
-
-        const responseColorSecond = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-
-            "filter": {
-                "offer_id": List[1],
-                "visibility": "ALL"
-            },
-            "limit": 1000,
-            "sort_dir": "ASC"
-
-        }, {
-            headers: {
-                "Client-Id": process.env.OZON_CLIENT_ID,
-                "Api-Key": process.env.OZON_API_KEY
-            }
-        })
-
-        let second = responseColorSecond.data.result
-
-        const dataColor = [...first, ...second]
 
         for(let i of dataColor) {
 
