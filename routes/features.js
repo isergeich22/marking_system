@@ -373,97 +373,102 @@ router.get('/personal_orders', async function(req, res) {
     }
 
     async function createImport(array) {
-
-        const fileName = './public/IMPORT_TNVED_6302 (3).xlsx'
-
-        const wb = new exl.Workbook()
-
-        await wb.xlsx.readFile(fileName)
-
-        const ws = wb.getWorksheet('IMPORT_TNVED_6302')
-
-        let cellNumber = 5
-
-        for(let i = 0; i < array.length; i++) {
-
-            console.log(array[i])
-            console.log(names.find(o => o.name == array[i]))
-
-            ws.getCell(`A${cellNumber}`).value = 6302
-            ws.getCell(`B${cellNumber}`).value = names.find(o => o.name.indexOf('Простыня бязь 150х220 - 120 - Белый') >= 0).name
-            ws.getCell(`C${cellNumber}`).value = 'Ивановский текстиль'
-            ws.getCell(`D${cellNumber}`).value = 'Артикул'
-            ws.getCell(`E${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).vendor
-            ws.getCell(`F${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).productType
-            ws.getCell(`G${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).color
-            ws.getCell(`H${cellNumber}`).value = 'ВЗРОСЛЫЙ'
-
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'КРЕП-ЖАТКА' || names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'КРЕП ЖАТКА') ws.getCell(`I${cellNumber}`).value = 'КРЕП'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`I${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЕН' || names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЁН') ws.getCell(`I${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'СТРАЙП САТИН') ws.getCell(`I${cellNumber}`).value = 'СТРАЙП-САТИН'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'САТИН ЛЮКС') ws.getCell(`I${cellNumber}`).value = 'САТИН'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЕН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЁН') ws.getCell(`I${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).cloth
-
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ПОЛИСАТИН') ws.getCell(`J${cellNumber}`).value = '100% Полиэстер'
-
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ТЕНСЕЛЬ') ws.getCell(`J${cellNumber}`).value = '100% Лиоцелл'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЕН' || names.find(o => o.name.indexOf(array[i]) >= 0).cloth === 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Лен'
-            if(names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'КРЕП ЖАТКА' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ТЕНСЕЛЬ' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЕН' && names.find(o => o.name.indexOf(array[i]) >= 0).cloth !== 'ЛЁН') ws.getCell(`J${cellNumber}`).value = '100% Хлопок'
-
-            ws.getCell(`K${cellNumber}`).value = names.find(o => o.name.indexOf(array[i]) >= 0).size
-            ws.getCell(`L${cellNumber}`).value = '6302100001'
-            ws.getCell(`M${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности'
-            ws.getCell(`N${cellNumber}`).value = 'На модерации'
-
-            cellNumber++
-
-        }
-
-        ws.unMergeCells('D2')
-
-        ws.getCell('E2').value = '13914'
-
-        ws.getCell('E2').fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor:{argb:'E3E3E3'}
-        }
-
-        ws.getCell('E2').font = {
-            size: 10,
-            name: 'Arial'
-        }
-
-        ws.getCell('E2').alignment = {
-            horizontal: 'center',
-            vertical: 'bottom'
-        }
-
-        const date_ob = new Date()
-
-        let month = date_ob.getMonth() + 1
-
-        let filePath = ''
-
-        month < 10 ? filePath = `./public/personal/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_personal` : filePath = `./public/personal/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_personal`
-
-        fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
-            if(err) {
-                await wb.xlsx.writeFile(`${filePath}.xlsx`)
-            } else {
-                let count = 1
-                fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
-                    if(err) {
-                        await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
-                    } else {
-                        await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
-                    }
-                })
-
+    
+            const fileName = './public/IMPORT_TNVED_6302.xlsx'
+    
+            const wb = new exl.Workbook()
+    
+            await wb.xlsx.readFile(fileName)
+    
+            const ws = wb.getWorksheet('IMPORT_TNVED_6302')
+    
+            let cellNumber = 5
+    
+            for(let i = 0; i < array.length; i++) {
+    
+                ws.getCell(`B${cellNumber}`).value = 6302
+                names.find(o => o.name === array[i]).productType === 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ' ? ws.getCell(`C${cellNumber}`).value = 'Да' : ws.getCell(`C${cellNumber}`).value = 'Нет'
+                ws.getCell(`D${cellNumber}`).value = names.find(o => o.name === array[i]).name
+                ws.getCell(`E${cellNumber}`).value = 'Ивановский текстиль'
+                ws.getCell(`F${cellNumber}`).value = 'Артикул'
+                ws.getCell(`G${cellNumber}`).value = names.find(o => o.name === array[i]).vendor
+                ws.getCell(`H${cellNumber}`).value = names.find(o => o.name === array[i]).productType
+                ws.getCell(`I${cellNumber}`).value = names.find(o => o.name === array[i]).color
+                ws.getCell(`J${cellNumber}`).value = 'ВЗРОСЛЫЙ'
+    
+                if(names.find(o => o.name === array[i]).cloth.includes('ЖАТКА')) ws.getCell(`K${cellNumber}`).value = 'КРЕП'
+                if(names.find(o => o.name === array[i]).cloth === 'ВАРЕНЫЙ ХЛОПОК') ws.getCell(`K${cellNumber}`).value = 'ХЛОПКОВАЯ ТКАНЬ'
+                if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`K${cellNumber}`).value = 'ЛЬНЯНАЯ ТКАНЬ'
+                if(names.find(o => o.name === array[i]).cloth === 'СТРАЙП САТИН') ws.getCell(`K${cellNumber}`).value = 'СТРАЙП-САТИН'
+                if(names.find(o => o.name === array[i]).cloth === 'САТИН ЛЮКС') ws.getCell(`K${cellNumber}`).value = 'САТИН'
+                if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'САТИН ЛЮКС' && names.find(o => o.name === array[i]).cloth !== 'СТРАЙП САТИН' && names.find(o => o.name === array[i]).cloth !== 'ВАРЕНЫЙ ХЛОПОК' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`K${cellNumber}`).value = names.find(o => o.name === array[i]).cloth
+    
+                if(names.find(o => o.name === array[i]).cloth === 'ПОЛИСАТИН' || names.find(o => o.name === array[i]).cloth.includes('ЖАТКА')) ws.getCell(`L${cellNumber}`).value = '100% Полиэстер'
+    
+                if(names.find(o => o.name === array[i]).cloth.includes('ТЕНСЕЛ')) ws.getCell(`L${cellNumber}`).value = '100% Лиоцелл'
+                if(names.find(o => o.name === array[i]).cloth === 'ЛЕН' || names.find(o => o.name === array[i]).cloth === 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Лен'
+                if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') ws.getCell(`L${cellNumber}`).value = '100% Хлопок'
+                ws.getCell(`M${cellNumber}`).value = names.find(o => o.name === array[i]).size
+                if(names.find(o => o.name === array[i]).cloth !== 'ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'КРЕП-ЖАТКА' && names.find(o => o.name === array[i]).cloth !== 'ПОЛИСАТИН' && names.find(o => o.name === array[i]).cloth !== 'ТЕНСЕЛ' && names.find(o => o.name === array[i]).cloth !== 'ЛЕН' && names.find(o => o.name === array[i]).cloth !== 'ЛЁН') {
+    
+                    ws.getCell(`N${cellNumber}`).value = '6302310009'
+    
+                } else {
+    
+                    ws.getCell(`N${cellNumber}`).value = '6302299000'
+    
+                }
+                ws.getCell(`O${cellNumber}`).value = 'ТР ТС 017/2011 "О безопасности продукции легкой промышленности"'
+                ws.getCell(`P${cellNumber}`).value = 'Черновик'
+    
+                cellNumber++
+    
             }
-        })
-
+    
+            ws.unMergeCells('F2')
+    
+            ws.getCell('G2').value = '13914'
+    
+            ws.getCell('G2').fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor:{argb:'E3E3E3'}
+            }
+    
+            ws.getCell('G2').font = {
+                size: 10,
+                name: 'Arial'
+            }
+    
+            ws.getCell('G2').alignment = {
+                horizontal: 'center',
+                vertical: 'bottom'
+            }
+    
+            const date_ob = new Date()
+    
+            let month = date_ob.getMonth() + 1
+    
+            let filePath = ''
+    
+            month < 10 ? filePath = `./public/personal/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_personal` : filePath = `./public/personal/IMPORT_TNVED_6302_${date_ob.getDate()}_0${month}_personal`
+    
+            fs.access(`${filePath}.xlsx`, fs.constants.R_OK, async (err) => {
+                if(err) {
+                    await wb.xlsx.writeFile(`${filePath}.xlsx`)
+                } else {
+                    let count = 1
+                    fs.access(`${filePath}_(1).xlsx`, fs.constants.R_OK, async (err) => {
+                        if(err) {
+                            await wb.xlsx.writeFile(`${filePath}_(1).xlsx`)
+                        } else {
+                            await wb.xlsx.writeFile(`${filePath}_(2).xlsx`)
+                        }
+                    })
+    
+                }
+            })
+    
     }
 
     function createNameList() {
