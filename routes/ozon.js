@@ -778,7 +778,7 @@ router.get('/ozon/:from', async function(req, res){
 
         'dir': 'asc',
         'filter': {
-            'since':`${req.params.from}:00:00.000Z`,
+            'since':`${req.params.from}:50:00.000Z`,
             'status':'awaiting_deliver',
             'to':`${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
@@ -1240,7 +1240,7 @@ router.get('/ozon_marks_order/:from', async function(req, res){
 
         'dir': 'asc',
         'filter': {
-            'since':`${req.params.from}:00:00.000Z`,
+            'since':`${req.params.from}:50:00.000Z`,
             'status':'awaiting_deliver',
             'to':`${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
