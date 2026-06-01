@@ -890,68 +890,72 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
 
         for(let order of ordersList) {
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('тенсел') >= 0)) {
-                analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
-            }
+            if(order.products.find(o => o.name.toLowerCase().indexOf('пододе') >= 0)) {
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') < 0 && o.name.toLowerCase().indexOf('жаккард') < 0 && o.name.toLowerCase().indexOf('твил') < 0 && o.name.toLowerCase().indexOf('поли') < 0)) {
-                analyticObject["Сатин"] = analyticObject["Сатин"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('тенсел') >= 0)) {
+                    analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') >= 0)) {
-                analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') < 0 && o.name.toLowerCase().indexOf('жаккард') < 0 && o.name.toLowerCase().indexOf('твил') < 0 && o.name.toLowerCase().indexOf('поли') < 0)) {
+                    analyticObject["Сатин"] = analyticObject["Сатин"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('твил') >= 0)) {
-                analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') >= 0)) {
+                    analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('поли') >= 0)) {
-                analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('твил') >= 0)) {
+                    analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('жаккард') >= 0)) {
-                analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('поли') >= 0)) {
+                    analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('бяз') >= 0)) {
-                analyticObject["Бязь"] = analyticObject["Бязь"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('жаккард') >= 0)) {
+                    analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('варен') >= 0 || o.name.toLowerCase().indexOf('варён') >= 0 || o.name.toLowerCase().indexOf('хлоп') >= 0)) {
-                analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('бяз') >= 0)) {
+                    analyticObject["Бязь"] = analyticObject["Бязь"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('микрофибр') >= 0)) {
-                analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('варен') >= 0 || o.name.toLowerCase().indexOf('варён') >= 0 || o.name.toLowerCase().indexOf('хлоп') >= 0)) {
+                    analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('мулетон') >= 0)) {
-                analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('микрофибр') >= 0)) {
+                    analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('поплин') >= 0)) {
-                analyticObject["Поплин"] = analyticObject["Поплин"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('мулетон') >= 0)) {
+                    analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('перкал') >= 0)) {
-                analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('поплин') >= 0)) {
+                    analyticObject["Поплин"] = analyticObject["Поплин"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('ранфор') >= 0)) {
-                analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('перкал') >= 0)) {
+                    analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('микросатин') >= 0)) {
-                analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('ранфор') >= 0)) {
+                    analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('креп-ж') >= 0 || order.products.find(o => o.name.toLowerCase().indexOf('креп') >= 0))) {
-                analyticObject["Креп-жатка"] = analyticObject["Креп-жатка"] + 1
-            }
+                if(order.products.find(o => o.name.toLowerCase().indexOf('микросатин') >= 0)) {
+                    analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
+                }
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('жатка') >= 0 && order.products.find(o => o.name.toLowerCase().indexOf('креп') < 0))) {
-                analyticObject["Жатка"] = analyticObject["Жатка"] + 1
+                if(order.products.find(o => o.name.toLowerCase().indexOf('креп-ж') >= 0 || order.products.find(o => o.name.toLowerCase().indexOf('креп') >= 0))) {
+                    analyticObject["Креп-жатка"] = analyticObject["Креп-жатка"] + 1
+                }
+
+                if(order.products.find(o => o.name.toLowerCase().indexOf('жатка') >= 0 && order.products.find(o => o.name.toLowerCase().indexOf('креп') < 0))) {
+                    analyticObject["Жатка"] = analyticObject["Жатка"] + 1
+                }
+
             }
 
         }
@@ -1009,6 +1013,196 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
         html += `</div>`
 
         html += `</div></div>`
+
+        let blanketcaseSizes = {
+
+        }
+
+        const blanketcaseOffers = []
+
+        for(let order of ordersList) {
+
+            order.products.forEach(i => {
+
+                if(i.name.toLowerCase().indexOf('пододе') >= 0) {                   
+
+                    console.log(i.name)
+
+                    blanketcaseOffers.push(i.offer_id)
+
+                }
+
+            })
+
+        }
+
+        const uniqueOffers = [...new Set(blanketcaseOffers)]
+
+        let data = []
+
+        let responseCount = 0
+        let chuncksArray = []
+
+        try {
+
+            responseCount = Math.ceil(uniqueOffers.length / 1000)
+            chuncksArray = splitArrayIntoChunks(uniqueOffers, 1000)
+
+            for(let i = 0; i < responseCount; i++) {
+
+                const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+                    "filter": {
+                        "offer_id": chuncksArray[i],
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
+
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
+
+                data = data.concat(response.data.result)
+
+            }
+
+        } catch(err) {
+            console.error(err)
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 6773).values[0].value) in blanketcaseSizes) {
+
+                blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] = blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] + 1
+
+            } else {
+
+                blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] = 1
+
+            }
+
+        }
+
+        const sizeBlanketsChart = new QuickChart()
+
+        sizeBlanketsChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(blanketcaseSizes),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(blanketcaseSizes),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const sizeBlanketsChartUrl = sizeBlanketsChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${sizeBlanketsChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(blanketcaseSizes)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${blanketcaseSizes[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        let blanketcaseColors = {
+
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 10096).values[0].value) in blanketcaseColors) {
+
+                blanketcaseColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = blanketcaseColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] + 1
+
+            } else {
+
+                blanketcaseColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = 1
+
+            }
+
+        }
+
+        const colorBlanketsChart = new QuickChart()
+
+        colorBlanketsChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(blanketcaseColors),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(blanketcaseColors),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const colorBlanketsChartUrl = colorBlanketsChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${colorBlanketsChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(blanketcaseColors)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${blanketcaseColors[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
 
         res.render('analytics-raw', { title: `Аналитика спроса за ${year} год`, content: html, buttons })
 
