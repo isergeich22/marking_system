@@ -2232,6 +2232,118 @@ router.get('/cdek_test/:from/:to', async function (req, res) {
 
 })
 
+router.get('/get_deliver_analytic/:year', async function (req, res) {
+
+    const year = req.params.year
+    const ordersList = []
+
+    const analyticObject = {
+        
+    }
+
+    let count = 0
+    let hasNext = true
+    let offset = 0
+
+    while(hasNext === true) {
+        const response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+            "dir": "asc",
+            "filter": {
+                "since": `${year}-01-01T00:00:00.000Z`,
+                "status": "delivered",
+                "to": `${year}-12-31T23:59:59.999Z`
+            },
+            "limit": 1000,
+            "offset": offset
+        }, {
+            headers: {
+                "Client-Id": process.env.OZON_CLIENT_ID,
+                "Api-Key": process.env.OZON_API_KEY
+            }
+        })
+
+        for(let order of response.data.result.postings) {
+            ordersList.push(order)
+        }
+
+        hasNext = response.data.result.has_next
+        count += response.data.result.postings.length
+        offset = count
+
+    }
+
+    for(let order of ordersList) {
+
+        if(String(order.delivery_method.name) in analyticObject) {
+
+                analyticObject[String(order.delivery_method.name)] = analyticObject[String(order.delivery_method.name)] + 1
+
+            } else {
+
+                analyticObject[String(order.delivery_method.name)] = 1
+
+            }
+
+    }
+
+    let html = `<div class="fixed-grid has-1-cols"><div class="grid">`
+
+        const myChart = new QuickChart()
+
+        myChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(analyticObject),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(analyticObject),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const chartUrl = myChart.getUrl()
+
+        html += `<div class="cell">
+                    <img src="${chartUrl}">`
+
+        html += `
+                <table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Продукт</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(analyticObject)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${analyticObject[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        html += `</div></div>`
+
+        res.render('analytics-raw', { title: `Аналитика методов доставки за ${year} год`, content: html, buttons })
+    
+})
+
 router.get('/revenue/:year', async (req, res) => {
 
     let i = 0
