@@ -217,7 +217,7 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
     }
 
     ordersList = ordersList.filter(o => {
-        if(o.products.find(i => i.name.indexOf(req.params.product) >= 0)) {
+        if(o.products.find(i => i.name.toLowerCase().indexOf(req.params.product) >= 0)) {
             return o
         }
     })
@@ -888,73 +888,87 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
 
     if(req.params.product.toLowerCase().indexOf('пододе') >= 0) {
 
+        let blanketcaseSizes = {
+
+        }
+
+        const blanketcaseOffers = []
+
         for(let order of ordersList) {
 
-            if(order.products.find(o => o.name.toLowerCase().indexOf('пододе') >= 0)) {
+            order.products.forEach(i => {
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('тенсел') >= 0)) {
-                    analyticObject["Тенсель"] = analyticObject["Тенсель"] + 1
+                if(i.name.toLowerCase().indexOf('пододе') >= 0) {
+
+                    blanketcaseOffers.push(i.offer_id)
+
                 }
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') < 0 && o.name.toLowerCase().indexOf('жаккард') < 0 && o.name.toLowerCase().indexOf('твил') < 0 && o.name.toLowerCase().indexOf('поли') < 0)) {
-                    analyticObject["Сатин"] = analyticObject["Сатин"] + 1
-                }
+            })
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('страйп') >= 0)) {
-                    analyticObject["Страйп-сатин"] = analyticObject["Страйп-сатин"] + 1
-                }
+        }
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('твил') >= 0)) {
-                    analyticObject["Твил-сатин"] = analyticObject["Твил-сатин"] + 1
-                }
+        const uniqueOffers = [...new Set(blanketcaseOffers)]
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('поли') >= 0)) {
-                    analyticObject["Полисатин"] = analyticObject["Полисатин"] + 1
-                }
+        let data = []
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('сатин') >= 0 && o.name.toLowerCase().indexOf('жаккард') >= 0)) {
-                    analyticObject["Сатин-жаккард"] = analyticObject["Сатин-жаккард"] + 1
-                }
+        let responseCount = 0
+        let chuncksArray = []
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('бяз') >= 0)) {
-                    analyticObject["Бязь"] = analyticObject["Бязь"] + 1
-                }
+        try {
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('варен') >= 0 || o.name.toLowerCase().indexOf('варён') >= 0 || o.name.toLowerCase().indexOf('хлоп') >= 0)) {
-                    analyticObject["Вареный хлопок"] = analyticObject["Вареный хлопок"] + 1
-                }
+            responseCount = Math.ceil(uniqueOffers.length / 1000)
+            chuncksArray = splitArrayIntoChunks(uniqueOffers, 1000)
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('микрофибр') >= 0)) {
-                    analyticObject["Микрофибра"] = analyticObject["Микрофибра"] + 1
-                }
+            for(let i = 0; i < responseCount; i++) {
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('мулетон') >= 0)) {
-                    analyticObject["Мулетон"] = analyticObject["Мулетон"] + 1
-                }
+                const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('поплин') >= 0)) {
-                    analyticObject["Поплин"] = analyticObject["Поплин"] + 1
-                }
+                    "filter": {
+                        "offer_id": chuncksArray[i],
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('перкал') >= 0)) {
-                    analyticObject["Перкаль"] = analyticObject["Перкаль"] + 1
-                }
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('ранфор') >= 0)) {
-                    analyticObject["Ранфорс"] = analyticObject["Ранфорс"] + 1
-                }
+                data = data.concat(response.data.result)
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('микросатин') >= 0)) {
-                    analyticObject["Микросатин"] = analyticObject["Микросатин"] + 1
-                }
+            }
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('креп-ж') >= 0 || order.products.find(o => o.name.toLowerCase().indexOf('креп') >= 0))) {
-                    analyticObject["Креп-жатка"] = analyticObject["Креп-жатка"] + 1
-                }
+        } catch(err) {
+            console.error(err)
+        }
 
-                if(order.products.find(o => o.name.toLowerCase().indexOf('жатка') >= 0 && order.products.find(o => o.name.toLowerCase().indexOf('креп') < 0))) {
-                    analyticObject["Жатка"] = analyticObject["Жатка"] + 1
-                }
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 6769).values[0].value) in analyticObject) {
+
+                analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] = analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] + 1
+
+            } else {
+
+                analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] = 1
+
+            }
+
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 6773).values[0].value) in blanketcaseSizes) {
+
+                blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] = blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] + 1
+
+            } else {
+
+                blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] = 1
 
             }
 
@@ -1013,80 +1027,6 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
         html += `</div>`
 
         html += `</div></div>`
-
-        let blanketcaseSizes = {
-
-        }
-
-        const blanketcaseOffers = []
-
-        for(let order of ordersList) {
-
-            order.products.forEach(i => {
-
-                if(i.name.toLowerCase().indexOf('пододе') >= 0) {                   
-
-                    console.log(i.name)
-
-                    blanketcaseOffers.push(i.offer_id)
-
-                }
-
-            })
-
-        }
-
-        const uniqueOffers = [...new Set(blanketcaseOffers)]
-
-        let data = []
-
-        let responseCount = 0
-        let chuncksArray = []
-
-        try {
-
-            responseCount = Math.ceil(uniqueOffers.length / 1000)
-            chuncksArray = splitArrayIntoChunks(uniqueOffers, 1000)
-
-            for(let i = 0; i < responseCount; i++) {
-
-                const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
-
-                    "filter": {
-                        "offer_id": chuncksArray[i],
-                        "visibility": "ALL"
-                    },
-                    "limit": 1000,
-                    "sort_dir": "ASC"
-
-                }, {
-                    headers: {
-                        "Client-Id": process.env.OZON_CLIENT_ID,
-                        "Api-Key": process.env.OZON_API_KEY
-                    }
-                })
-
-                data = data.concat(response.data.result)
-
-            }
-
-        } catch(err) {
-            console.error(err)
-        }
-
-        for(let i of data) {
-
-            if(String(i.attributes.find(o => o.id === 6773).values[0].value) in blanketcaseSizes) {
-
-                blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] = blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] + 1
-
-            } else {
-
-                blanketcaseSizes[String(i.attributes.find(o => o.id === 6773).values[0].value)] = 1
-
-            }
-
-        }
 
         const sizeBlanketsChart = new QuickChart()
 
@@ -1194,6 +1134,617 @@ router.get('/get_products_analytic/:year/:product', async function (req, res) {
                         <td class="has-text-black">${key}</td>
                         <td class="has-text-black">
                             ${blanketcaseColors[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        res.render('analytics-raw', { title: `Аналитика спроса за ${year} год`, content: html, buttons })
+
+    }
+
+    if(req.params.product.toLowerCase().indexOf('постельн') >= 0) {
+
+        let bundleSizes = {
+
+        }
+
+        const bundleOffers = []
+
+        for(let order of ordersList) {
+
+            order.products.forEach(i => {
+
+                if(i.name.toLowerCase().indexOf('постельн') >= 0) {
+
+                    bundleOffers.push(i.offer_id)
+
+                }
+
+            })
+
+        }
+
+        const uniqueOffers = [...new Set(bundleOffers)]
+
+        let data = []
+
+        let responseCount = 0
+        let chuncksArray = []
+
+        try {
+
+            responseCount = Math.ceil(uniqueOffers.length / 1000)
+            chuncksArray = splitArrayIntoChunks(uniqueOffers, 1000)
+
+            for(let i = 0; i < responseCount; i++) {
+
+                const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+                    "filter": {
+                        "offer_id": chuncksArray[i],
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
+
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
+
+                data = data.concat(response.data.result)
+
+            }
+
+        } catch(err) {
+            console.error(err)
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 6769).values[0].value) in analyticObject) {
+
+                analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] = analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] + 1
+
+            } else {
+
+                analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] = 1
+
+            }
+
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 21824).values[0].value) in bundleSizes) {
+
+                bundleSizes[String(i.attributes.find(o => o.id === 21824).values[0].value)] = bundleSizes[String(i.attributes.find(o => o.id === 21824).values[0].value)] + 1
+
+            } else {
+
+                bundleSizes[String(i.attributes.find(o => o.id === 21824).values[0].value)] = 1
+
+            }
+
+        }
+
+        let html = `<div class="fixed-grid has-1-cols"><div class="grid">`
+
+        const myChart = new QuickChart()
+
+        myChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(analyticObject),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(analyticObject),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const chartUrl = myChart.getUrl()
+
+        html += `<div class="cell">
+                    <img src="${chartUrl}">`
+
+        html += `
+                <table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Продукт</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(analyticObject)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${analyticObject[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        html += `</div></div>`
+
+        const sizeBundleChart = new QuickChart()
+
+        sizeBundleChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bundleSizes),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bundleSizes),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const sizeBundleChartUrl = sizeBundleChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${sizeBundleChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(bundleSizes)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bundleSizes[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        let bundleColors = {
+
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 10096).values[0].value) in bundleColors) {
+
+                bundleColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = bundleColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] + 1
+
+            } else {
+
+                bundleColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = 1
+
+            }
+
+        }
+
+        const colorBundleChart = new QuickChart()
+
+        colorBundleChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bundleColors),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bundleColors),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const colorBundleChartUrl = colorBundleChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${colorBundleChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(bundleColors)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bundleColors[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        let bundleConfiguration =  {
+
+        }
+
+        for(let i of data) {
+
+            console.log(i.offer_id)
+
+            if(i.attributes.find(o => o.id === 6781).values[0].value === 'на резинке') {
+
+                if(`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}${i.name.substr(i.name.indexOf(' - ')-3, 3)}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}` in bundleConfiguration) {
+
+                    bundleConfiguration[`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}${i.name.substr(i.name.indexOf(' - ')-3, 3)}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}`] = bundleConfiguration[`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}${i.name.substr(i.name.indexOf(' - ')-3, 3)}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}`] + 1
+
+                } else {
+
+                    bundleConfiguration[`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}${i.name.substr(i.name.indexOf(' - ')-3, 3)}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}`] = 1
+
+                }
+
+            }
+
+            if(i.attributes.find(o => o.id === 6781).values[0].value === 'стандартная') {
+
+                if(`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}` in bundleConfiguration) {
+
+                    bundleConfiguration[`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}`] = bundleConfiguration[`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}`] + 1
+
+                } else {
+
+                    bundleConfiguration[`Пододеяльник: ${i.attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${i.attributes.find(o => o.id === 6771).values[0].value}; Наволочки: ${i.attributes.find(o => o.id === 6772).values[0].value}`] = 1
+
+                }
+
+            }
+
+        }
+
+        const confBundleChart = new QuickChart()
+
+        confBundleChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(bundleConfiguration),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(bundleConfiguration),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const confBundleChartUrl = confBundleChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${confBundleChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(bundleConfiguration)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${bundleConfiguration[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        res.render('analytics-raw', { title: `Аналитика спроса за ${year} год`, content: html, buttons })
+
+    }
+
+    if(req.params.product.toLowerCase().indexOf('наволочк') >= 0) {
+
+        let pillowcaseSizes = {
+
+        }
+
+        const pillowcaseOffers = []
+
+        for(let order of ordersList) {
+
+            order.products.forEach(i => {
+
+                if(i.name.toLowerCase().indexOf(req.params.product) >= 0 && i.name.toLowerCase().indexOf('постельн') < 0) {
+
+                    pillowcaseOffers.push(i.offer_id)
+
+                }
+
+            })
+
+        }
+
+        const uniqueOffers = [...new Set(pillowcaseOffers)]
+
+        let data = []
+
+        let responseCount = 0
+        let chuncksArray = []
+
+        try {
+
+            responseCount = Math.ceil(uniqueOffers.length / 1000)
+            chuncksArray = splitArrayIntoChunks(uniqueOffers, 1000)
+
+            for(let i = 0; i < responseCount; i++) {
+
+                const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+
+                    "filter": {
+                        "offer_id": chuncksArray[i],
+                        "visibility": "ALL"
+                    },
+                    "limit": 1000,
+                    "sort_dir": "ASC"
+
+                }, {
+                    headers: {
+                        "Client-Id": process.env.OZON_CLIENT_ID,
+                        "Api-Key": process.env.OZON_API_KEY
+                    }
+                })
+
+                data = data.concat(response.data.result)
+
+            }
+
+        } catch(err) {
+            console.error(err)
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 6769).values[0].value) in analyticObject) {
+
+                analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] = analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] + 1
+
+            } else {
+
+                analyticObject[String(i.attributes.find(o => o.id === 6769).values[0].value)] = 1
+
+            }
+
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 6772).values[0].value) in pillowcaseSizes) {
+
+                pillowcaseSizes[String(i.attributes.find(o => o.id === 6772).values[0].value)] = pillowcaseSizes[String(i.attributes.find(o => o.id === 6772).values[0].value)] + 1
+
+            } else {
+
+                pillowcaseSizes[String(i.attributes.find(o => o.id === 6772).values[0].value)] = 1
+
+            }
+
+        }
+
+        let html = `<div class="fixed-grid has-1-cols"><div class="grid">`
+
+        const myChart = new QuickChart()
+
+        myChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(analyticObject),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(analyticObject),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const chartUrl = myChart.getUrl()
+
+        html += `<div class="cell">
+                    <img src="${chartUrl}">`
+
+        html += `
+                <table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Продукт</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(analyticObject)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${analyticObject[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        html += `</div></div>`
+
+        const sizePillowcaseChart = new QuickChart()
+
+        sizePillowcaseChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(pillowcaseSizes),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(pillowcaseSizes),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const sizePillowcaseChartUrl = sizePillowcaseChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${sizePillowcaseChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(pillowcaseSizes)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${pillowcaseSizes[key]} шт.
+                        </td>
+                    </tr>`
+
+        }
+
+        html += `</tbody>
+            </table>`
+
+        html += `</div>`
+
+        let pillowcaseColors = {
+
+        }
+
+        for(let i of data) {
+
+            if(String(i.attributes.find(o => o.id === 10096).values[0].value) in pillowcaseColors) {
+
+                pillowcaseColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = pillowcaseColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] + 1
+
+            } else {
+
+                pillowcaseColors[String(i.attributes.find(o => o.id === 10096).values[0].value)] = 1
+
+            }
+
+        }
+
+        const colorPillowcaseChart = new QuickChart()
+
+        colorPillowcaseChart.setConfig({
+            type: 'bar',
+            data: {
+                labels: Object.keys(pillowcaseColors),
+                datasets: [
+                    {
+                        label: 'Получено, шт.',
+                        data: Object.values(pillowcaseColors),
+                        fill: false
+                    }
+                ]
+            }
+        })
+        .setWidth(800)
+        .setHeight(400)
+        .setBackgroundColor('transparent')
+
+        const colorPillowcaseChartUrl = colorPillowcaseChart.getUrl()
+
+        html += `<div class="cell">
+                        <img src="${colorPillowcaseChartUrl}">`
+
+        html += `<table class="table is-fullwidth my-table">
+                    <thead>
+                        <tr>
+                            <th class="has-text-left has-text-black">Размер, (Д×Ш)</th>
+                            <th class="has-text-left has-text-black">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>`
+
+        for(let key of Object.keys(pillowcaseColors)) {
+
+            html += `<tr>
+                        <td class="has-text-black">${key}</td>
+                        <td class="has-text-black">
+                            ${pillowcaseColors[key]} шт.
                         </td>
                     </tr>`
 
