@@ -382,7 +382,7 @@ router.get('/ozon', async function(req, res){
 
         await wb.xlsx.readFile(fileName)
 
-        const ws = wb.getWorksheet('IMPORT_TNVED_6302')
+        const ws = wb.getWorksheet(1)
 
         let cellNumber = 5
 
