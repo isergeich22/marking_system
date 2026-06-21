@@ -216,7 +216,7 @@ router.get('/personal_orders', async function(req, res) {
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                                'productType': 'КОМПЛЕКТ'
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                             })
 
                         }
@@ -231,7 +231,7 @@ router.get('/personal_orders', async function(req, res) {
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                                'productType': 'КОМПЛЕКТ'
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                             })
 
                         }
@@ -246,7 +246,7 @@ router.get('/personal_orders', async function(req, res) {
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                                'productType': 'КОМПЛЕКТ'
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                             })
 
                         }
@@ -263,7 +263,7 @@ router.get('/personal_orders', async function(req, res) {
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[1].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -284,7 +284,7 @@ router.get('/personal_orders', async function(req, res) {
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                                'productType': 'КОМПЛЕКТ'
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                             })
 
                         }
@@ -299,7 +299,7 @@ router.get('/personal_orders', async function(req, res) {
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x30; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                                'productType': 'КОМПЛЕКТ'
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                             })
 
                         }
@@ -314,7 +314,7 @@ router.get('/personal_orders', async function(req, res) {
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x40; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                                'productType': 'КОМПЛЕКТ'
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                             })
 
                         }
@@ -331,7 +331,7 @@ router.get('/personal_orders', async function(req, res) {
                             'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                             'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                             'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                            'productType': 'КОМПЛЕКТ'
+                            'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
                         })
 
                     }
@@ -342,6 +342,8 @@ router.get('/personal_orders', async function(req, res) {
             }
 
             names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Наматрас')  < 0 && o.name.indexOf('Ветошь') < 0)
+
+            console.log(names)
 
         } catch(err) {
 
@@ -366,7 +368,9 @@ router.get('/personal_orders', async function(req, res) {
 
         difference.forEach(el => {
 
-            new_items.push(el.name)
+            if(el.name.indexOf('Постельн') >= 0) new_items.push(`КПБ ${el.name}`)
+
+            if(el.name.indexOf('Постельн') < 0) new_items.push(el.name)
 
         })
 
@@ -616,8 +620,9 @@ router.get('/personal_orders', async function(req, res) {
 
     }
 
-    console.log(difference.length)
-    console.log(new_items.length)
+    console.log(new_items)
+    // console.log(difference.length)
+    // console.log(new_items.length)
 
     if(new_items.length > 0) await createImport(new_items)
 
