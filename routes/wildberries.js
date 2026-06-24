@@ -99,7 +99,7 @@ router.get('/wildberries', async function(req, res){
 
             if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+                if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
                     names.push({
                         'vendor': wb_orders[i].vendor,
@@ -114,7 +114,7 @@ router.get('/wildberries', async function(req, res){
 
                 }
 
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                if(response.data.result[0].name.indexOf('резинка') < 0) {
 
                     names.push({
                         'vendor': wb_orders[i].vendor,
@@ -167,7 +167,7 @@ router.get('/wildberries', async function(req, res){
 
                 if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
 
-                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+                    if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
                         if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
@@ -216,7 +216,7 @@ router.get('/wildberries', async function(req, res){
 
                     }
 
-                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                    if(response.data.result[0].name.indexOf('резинка') < 0) {
 
                         names.push({
                             'vendor': wb_orders[i].vendor,
@@ -235,7 +235,7 @@ router.get('/wildberries', async function(req, res){
 
                 if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
 
-                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+                    if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
                         if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
@@ -284,7 +284,7 @@ router.get('/wildberries', async function(req, res){
 
                     }
 
-                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                    if(response.data.result[0].name.indexOf('резинка') < 0) {
 
                         names.push({
                             'vendor': wb_orders[i].vendor,
