@@ -24,8 +24,9 @@ router.get('/wildberries', async function(req, res){
 
     const c2 = ws.getColumn(2)
 
-    c2.eachCell(c => {
-        nat_cat.push(c.value)
+    c2.eachCell({ includeEmpty: false }, (c, rowNumber) => {
+        if(rowNumber < 5) return
+        nat_cat.push(c.value.toLowerCase().trim())
     })
 
     await wb.xlsx.readFile(wbFile)
@@ -315,11 +316,11 @@ router.get('/wildberries', async function(req, res){
 
     names.forEach(el => {
 
-            if(nat_cat.indexOf(el.name) < 0) {
+            if(nat_cat.indexOf(el.name.toLowerCase().trim()) < 0) {
                 new_items.push(el.name)
             }
 
-            if(nat_cat.indexOf(el.name) >= 0) {
+            if(nat_cat.indexOf(el.name.toLowerCase().trim()) >= 0) {
                 current_items.push(el.name)
             }
 
@@ -454,14 +455,16 @@ router.get('/wildberries_marks_order', async function(req, res) {
 
     const c1 = ws.getColumn(1)
 
-    c1.eachCell(c => {
+    c1.eachCell({ includeEmpty: false }, (c, rowNumber) => {
+        if(rowNumber < 5) return
         gtins.push(c.value)
     })
 
     const c2 = ws.getColumn(2)
 
-    c2.eachCell(c => {
-        nat_cat.push(c.value)
+    c2.eachCell({ includeEmpty: false }, (c, rowNumber) => {
+        if(rowNumber < 5) return
+        nat_cat.push(c.value.toLowerCase().trim())
     })
 
     await wb.xlsx.readFile(wbFile)
@@ -570,7 +573,7 @@ router.get('/wildberries_marks_order', async function(req, res) {
 
         for(let i = 0; i < names.length; i++) {
 
-            if(nat_cat.indexOf(names[i].name) >= 0) {
+            if(nat_cat.indexOf(names[i].name.toLowerCase().trim()) >= 0) {
                 temp.push(wb_orders.find(o => o.vendor === names[i].vendor).quantity)
             }
 
@@ -590,6 +593,8 @@ router.get('/wildberries_marks_order', async function(req, res) {
     let List = createNameList()
     let Quantity = createQuantityList()
 
+    console.log(List)
+
     function createOrder() {
 
         let content = ``
@@ -607,12 +612,12 @@ router.get('/wildberries_marks_order', async function(req, res) {
                                     <products>`
 
                     for(let j = 0; j < List[i].length; j++) {
-                        if(nat_cat.indexOf(List[i][j]) >= 0) {
+                        if(nat_cat.indexOf(List[i][j].toLowerCase().trim()) >= 0) {
 
-                            if(nat_cat[nat_cat.indexOf(List[i][j])].includes('КПБ')) {
+                            if(nat_cat[nat_cat.indexOf(List[i][j].toLowerCase().trim())].includes('кпб')) {
 
                                 content += `<product>
-                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j].toLowerCase().trim())]}</gtin>
                                                 <quantity>${Quantity[i][j]}</quantity>
                                                 <serialNumberType>OPERATOR</serialNumberType>
                                                 <cisType>BUNDLE</cisType>
@@ -621,10 +626,10 @@ router.get('/wildberries_marks_order', async function(req, res) {
 
                             }
 
-                            if(nat_cat[nat_cat.indexOf(List[i][j])].indexOf('КПБ') < 0) {
+                            if(nat_cat[nat_cat.indexOf(List[i][j].toLowerCase().trim())].indexOf('кпб') < 0) {
 
                                 content += `<product>
-                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j].toLowerCase().trim())]}</gtin>
                                                 <quantity>${Quantity[i][j]}</quantity>
                                                 <serialNumberType>OPERATOR</serialNumberType>
                                                 <cisType>UNIT</cisType>

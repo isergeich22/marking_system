@@ -727,7 +727,45 @@ router.get('/test_features', async function(req, res){
 
 router.get('/clear_duplicate', async function(req, res){
 
-    const workbook = new exl.Workbook()
+    const nat_cat = []
+
+    const wb = new exl.Workbook()
+
+    const fileName = './public/Краткий отчет.xlsx'
+
+    await wb.xlsx.readFile(fileName)
+
+    const nc_ws = wb.getWorksheet(1)
+
+    nc_ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+
+        if(rowNumber < 5) return
+
+        nat_cat.push({
+            'gtin': row.values[1],
+            'name': row.values[2].toLowerCase().trim()
+        })
+
+    })
+
+    const duplicatesByName = Array.from(
+        nat_cat.reduce((map, item) => {
+            const key = item.name
+
+            if (!map.has(key)) {
+                map.set(key, [])
+            }
+
+            map.get(key).push(item)
+
+            return map
+        }, new Map()).values()
+    ).filter(group => group.length > 1)
+
+    res.json({
+        count: duplicatesByName.length,
+        duplicatesByName
+    })
 
 })
 

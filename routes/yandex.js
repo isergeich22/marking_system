@@ -376,11 +376,11 @@ router.get('/yandex', async function(req, res){
 
     names.forEach(el => {
 
-            if(nat_cat.findIndex(o => o.name === el.name) < 0) {
+            if(nat_cat.findIndex(o => o.name.toLowerCase().trim() === el.name.toLowerCase().trim()) < 0) {
                 new_items.push(el.name)
             }
 
-            if(nat_cat.findIndex(o => o.name === el.name) >= 0) {
+            if(nat_cat.findIndex(o => o.name.toLowerCase().trim() === el.name.toLowerCase().trim()) >= 0) {
                 current_items.push(el.name)
             }
 
@@ -522,7 +522,7 @@ router.get('/yandex_marks_order', async function (req, res){
     nc_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
         if(rowNumber < 5) return
-        nat_cat.push(c.value.trim())
+        nat_cat.push(c.value.toLowerCase().trim())
 
     })
 
@@ -669,7 +669,7 @@ router.get('/yandex_marks_order', async function (req, res){
 
         for (let i = 0; i < ya_orders.length; i++) {
 
-            if(nat_cat.indexOf(ya_orders[i].name) >= 0) {
+            if(nat_cat.indexOf(ya_orders[i].name.toLowerCase().trim()) >= 0) {
 
                 _temp.push(ya_orders[i].name)
 
@@ -700,7 +700,7 @@ router.get('/yandex_marks_order', async function (req, res){
 
         for(let i = 0; i < ya_orders.length; i++) {
 
-            if(nat_cat.indexOf(ya_orders[i].name) >= 0) {
+            if(nat_cat.indexOf(ya_orders[i].name.toLowerCase().trim()) >= 0) {
 
                 temp.push(ya_orders[i].quantity)
 
@@ -744,12 +744,12 @@ router.get('/yandex_marks_order', async function (req, res){
                                     <products>`
 
                     for(let j = 0; j < List[i].length; j++) {
-                        if(nat_cat.indexOf(List[i][j]) >= 0) {
+                        if(nat_cat.indexOf(List[i][j].toLowerCase().trim()) >= 0) {
 
-                            if(nat_cat[nat_cat.indexOf(List[i][j])].includes('КПБ')) {
+                            if(nat_cat[nat_cat.indexOf(List[i][j].toLowerCase().trim())].indexOf('кпб') >= 0) {
 
                                 content += `<product>
-                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j].toLowerCase().trim())]}</gtin>
                                                 <quantity>${Quantity[i][j]}</quantity>
                                                 <serialNumberType>OPERATOR</serialNumberType>
                                                 <cisType>BUNDLE</cisType>
@@ -758,10 +758,10 @@ router.get('/yandex_marks_order', async function (req, res){
 
                             }
 
-                            if(nat_cat[nat_cat.indexOf(List[i][j])].indexOf('КПБ') < 0) {
+                            if(nat_cat[nat_cat.indexOf(List[i][j].toLowerCase().trim())].indexOf('кпб') < 0) {
 
                                 content += `<product>
-                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j])]}</gtin>
+                                                <gtin>0${gtins[nat_cat.indexOf(List[i][j].toLowerCase().trim())]}</gtin>
                                                 <quantity>${Quantity[i][j]}</quantity>
                                                 <serialNumberType>OPERATOR</serialNumberType>
                                                 <cisType>UNIT</cisType>
