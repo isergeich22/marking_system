@@ -727,45 +727,33 @@ router.get('/test_features', async function(req, res){
 
 router.get('/clear_duplicate', async function(req, res){
 
-    const nat_cat = []
+    const workbook = XLSX.readFile(path.join(__dirname, './public/Краткий_отчет.xlsx'));
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
-    const wb = new exl.Workbook()
+    // Найти строку-заголовок (где есть 'GTIN')
+    const headerRowIndex = rows.findIndex(r => r.some(cell => cell === 'GTIN'));
+    const headers = rows[headerRowIndex];
+    const gtinIdx = headers.indexOf('GTIN');
+    const nameIdx = headers.indexOf('Полное наименование товара');
 
-    const fileName = './public/Краткий отчет.xlsx'
+    const data = rows.slice(headerRowIndex + 1)
+        .filter(r => r[gtinIdx] && r[nameIdx])
+        .map(r => ({ gtin: Number(r[gtinIdx]), name: String(r[nameIdx]).trim() }));
 
-    await wb.xlsx.readFile(fileName)
+    // Группируем по наименованию, берём запись с минимальным GTIN
+    const earliest = {};
+    for (const row of data) {
+        if (!earliest[row.name] || row.gtin < earliest[row.name]) {
+        earliest[row.name] = row.gtin;
+        }
+    }
 
-    const nc_ws = wb.getWorksheet(1)
+    const result = Object.values(earliest)
+        .sort((a, b) => a - b)
+        .join(',');
 
-    nc_ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-
-        if(rowNumber < 5) return
-
-        nat_cat.push({
-            'gtin': row.values[1],
-            'name': row.values[2].toLowerCase().trim()
-        })
-
-    })
-
-    const duplicatesByName = Array.from(
-        nat_cat.reduce((map, item) => {
-            const key = item.name
-
-            if (!map.has(key)) {
-                map.set(key, [])
-            }
-
-            map.get(key).push(item)
-
-            return map
-        }, new Map()).values()
-    ).filter(group => group.length > 1)
-
-    res.json({
-        count: duplicatesByName.length,
-        duplicatesByName
-    })
+    res.send(result);
 
 })
 
