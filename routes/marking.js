@@ -4,6 +4,8 @@ const fs = require('fs')
 const cio = require('cheerio')
 const axios = require('axios')
 const buttons = require('../config').buttons
+const XLSX = require('xlsx')
+const path = require('path')
 
 router.get('/input_own', async function(req, res){
 
@@ -727,7 +729,7 @@ router.get('/test_features', async function(req, res){
 
 router.get('/clear_duplicate', async function(req, res){
 
-    const workbook = XLSX.readFile(path.join(__dirname, './public/Краткий_отчет.xlsx'));
+    const workbook = XLSX.readFile(path.join(__dirname, '../public/Краткий отчет.xlsx'));
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
@@ -745,9 +747,11 @@ router.get('/clear_duplicate', async function(req, res){
     const earliest = {};
     for (const row of data) {
         if (!earliest[row.name] || row.gtin < earliest[row.name]) {
-        earliest[row.name] = row.gtin;
+            earliest[row.name] = row.gtin;
         }
     }
+
+    console.log(Object.keys(earliest).length)
 
     const result = Object.values(earliest)
         .sort((a, b) => a - b)
