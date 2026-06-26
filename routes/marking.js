@@ -619,13 +619,18 @@ router.get('/test_features', async function(req, res){
 
         const content = cio.load(fileContent)
 
+        console.log(content('span'))
+
         const spans = content('span')
 
         const divs = content('.bjGCrJ')
 
         spans.each((i, elem) => {
+            console.log(content(elem))
             products.push(content(elem).text())
         })
+
+        console.log(products)
 
         for(let i = 24; i < products.length; i++) {
             if(i%10 === 5 && products[i].indexOf('Готов к вводу в оборот') < 0 && products[i].indexOf('Опубликована') < 0 && products[i] !== '') {
@@ -646,7 +651,6 @@ router.get('/test_features', async function(req, res){
         }
 
     }
-
 
     await getList(fileContent)
 
@@ -703,8 +707,6 @@ router.get('/test_features', async function(req, res){
 
         let cellNumber = firstColumn.values.length
 
-        console.log(cellNumber)
-
         for(let i = 0; i < newProducts.length; i++) {
 
             const row = ws.getRow(cellNumber)
@@ -741,7 +743,10 @@ router.get('/clear_duplicate', async function(req, res){
 
     const data = rows.slice(headerRowIndex + 1)
         .filter(r => r[gtinIdx] && r[nameIdx])
-        .map(r => ({ gtin: Number(r[gtinIdx]), name: String(r[nameIdx]).trim() }));
+        .map(r => ({
+            gtin: Number(r[gtinIdx]),
+            name: String(r[nameIdx]).toLowerCase().trim()
+    }));
 
     // Группируем по наименованию, берём запись с минимальным GTIN
     const earliest = {};
@@ -751,11 +756,31 @@ router.get('/clear_duplicate', async function(req, res){
         }
     }
 
-    console.log(Object.keys(earliest).length)
+    console.log(`Уникальных наименований: ${Object.keys(earliest).length}`);
 
-    const result = Object.values(earliest)
-        .sort((a, b) => a - b)
-        .join(',');
+    // Найти группы где наименование встречается больше 1 раза
+    const nameCount = {};
+    for (const row of data) {
+    nameCount[row.name] = (nameCount[row.name] || 0) + 1;
+    }
+
+    // Только наименования с дублями
+    const duplicateNames = new Set(
+    Object.entries(nameCount)
+        .filter(([name, count]) => count > 1)
+        .map(([name]) => name)
+    );
+
+    // Берём из earliest только те записи где есть дубль
+    const gtinList = Object.entries(earliest)
+    .filter(([name]) => duplicateNames.has(name))
+    .map(([, gtin]) => gtin)
+    .sort((a, b) => a - b);
+
+    const result = gtinList.join(',');
+    const count = gtinList.length;
+
+    console.log(`GTIN с дублями: ${count}`); // должно быть ~211
 
     res.send(result);
 

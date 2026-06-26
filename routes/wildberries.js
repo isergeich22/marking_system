@@ -808,16 +808,16 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     h_c2.eachCell({includeEmpty: false}, (c, rowNumber) => {
         if(rowNumber < 5) return
-        nat_cat.push(c.value)
+        nat_cat.push(c.value.toLowerCase().trim())
     })
 
     await wb.xlsx.readFile(ozonFile)
 
-    const ws_4 = wb.getWorksheet('products')
+    const ws_4 = wb.getWorksheet(1)
 
     const o_c1 = ws_4.getColumn(1)
 
-    const o_c6 = ws_4.getColumn(6)
+    const o_c5 = ws_4.getColumn(5)
 
     o_c1.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
@@ -826,7 +826,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     })
 
-    o_c6.eachCell({includeEmpty: false}, (c, rowNumber) => {
+    o_c5.eachCell({includeEmpty: false}, (c, rowNumber) => {
 
         if(rowNumber < 2) return
         ozonNames.push(c.value)
@@ -844,35 +844,70 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     let _temp = []
 
-    wbOrder.forEach(el => {
+    for(let el of wbOrder) {
 
         if(_temp.find(o => o.name === el.orderProduct) >= 0) return
 
         if(nat_cat.indexOf(el.orderProduct) < 0) {
 
-            const item = ozon_cat.find(o => o.code === el.orderCode)
+            const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
+                "filter": {
+                    "offer_id": [
+                        el.orderCode
+                    ],
+                    "visibility": "ALL"
+                },
+                "limit": 100,
+                "sort_dir": "ASC"
+            },{
+
+                headers: {
+
+                    'Host':'api-seller.ozon.ru',
+                    'Client-Id':`${process.env.OZON_CLIENT_ID}`,
+                    'Api-Key':`${process.env.OZON_API_KEY}`,
+                    'Content-Type':'application/json'
+
+                }
+
+            })
+
+            if(response.data.result[0].name.indexOf('Постельн') >= 0) {
+
+                _temp.push({
+
+                    'name': `КПБ ${response.data.result[0].name}`,
+                    'gtin': gtins[nat_cat.indexOf(`кпб ${response.data.result[0].name.toLowerCase().trim()}`)]
+
+                })
+
+            }
+
+            if(response.data.result[0].name.indexOf('Постельн') < 0) {
+
+                _temp.push({
+
+                    'name': response.data.result[0].name,
+                    'gtin': gtins[nat_cat.indexOf(response.data.result[0].name.toLowerCase().trim())]
+
+                })
+
+            }
+
+        }
+
+        if(nat_cat.indexOf(el.orderProduct) >= 0) {           
 
             _temp.push({
 
                 'name': el.orderProduct,
-                'gtin': gtins[nat_cat.indexOf(item.name)]
+                'gtin': gtins[nat_cat.indexOf(el.orderProduct.toLowerCase().trim())]
 
             })
 
         }
 
-        if(nat_cat.indexOf(el.orderProduct) >= 0) {
-
-            _temp.push({
-
-                'name': el.orderProduct,
-                'gtin': gtins[nat_cat.indexOf(el.orderProduct)]
-
-            })
-
-        }
-
-    })
+    }
 
     _temp = _temp.filter(o => o.name.indexOf('Матрас') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Ветошь') < 0)
 
@@ -910,9 +945,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    for(let i = 0; i < wbOrder.length; i++) {
-
-        console.log(wbOrder[i].orderProduct)
+    for(let i = 0; i < wbOrder.length; i++) {        
 
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
 
