@@ -777,7 +777,7 @@ router.get('/clear_duplicate', async function(req, res){
     .map(([, gtin]) => gtin)
     .sort((a, b) => a - b);
 
-    const result = gtinList.join(',');
+    const result = gtinList.join(',<br>');
     const count = gtinList.length;
 
     console.log(`GTIN с дублями: ${count}`); // должно быть ~211
