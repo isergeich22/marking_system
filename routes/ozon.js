@@ -1249,15 +1249,18 @@ router.get('/ozon_marks_order/:from', async function(req, res){
 
     })
 
-    let response = await axios.post('https://api-seller.ozon.ru/v3/posting/fbs/list', {
+    let response = await axios.post('https://api-seller.ozon.ru/v4/posting/fbs/list', {
 
         'dir': 'asc',
         'filter': {
             'since':`${req.params.from}:00:00.000Z`,
-            'status':'awaiting_deliver',
+            "statuses": [
+                "awaiting_packaging",
+                "awaiting_deliver"
+            ],
             'to':`${new Date().getFullYear()}-12-31T23:59:59.000Z`
         },
-        'limit': 1000,
+        'limit': 100,
         'offset':0
 
     }, {
@@ -1271,7 +1274,7 @@ router.get('/ozon_marks_order/:from', async function(req, res){
 
     })
 
-    let result = response.data.result.postings
+    let result = response.data.postings
 
     result = result.filter(o => {
 
