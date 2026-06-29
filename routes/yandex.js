@@ -123,8 +123,8 @@ router.get('/yandex', async function(req, res){
 
     }
 
-    await getOrders(fbsId)
-    // await getOrders(dbsId)
+    // await getOrders(fbsId)
+    await getOrders(dbsId)
 
     for(let i = 0; i < ya_orders.length; i++) {
 
@@ -657,8 +657,8 @@ router.get('/yandex_marks_order', async function (req, res){
 
     }
 
-    await getOrders(fbsId)
-    // await getOrders(dbsId)
+    // await getOrders(fbsId)
+    await getOrders(dbsId)
 
     ya_orders = ya_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0)
 
