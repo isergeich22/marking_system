@@ -872,7 +872,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
             })
 
-            if(response.data.result[0].name.indexOf('Постельн') >= 0) {
+            if(response.data.result[0].name.toLowerCase().indexOf('постельн') >= 0) {
 
                 _temp.push({
 
@@ -883,7 +883,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
             }
 
-            if(response.data.result[0].name.indexOf('Постельн') < 0) {
+            if(response.data.result[0].name.toLowerCase().indexOf('постельн') < 0) {
 
                 _temp.push({
 
