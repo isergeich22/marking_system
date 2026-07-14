@@ -57,7 +57,9 @@ router.get('/personal_orders', async function(req, res) {
 
         let name = orderProducts[i].name
 
-        console.log(name)
+        name.toLowerCase().indexOf('постельно') >= 0 ? name = `КПБ ${name}` : name = name
+
+        // console.log(name)
 
         // console.log(nat_cat.find(o => name.indexOf(o) >= 0))
 
@@ -621,7 +623,7 @@ router.get('/personal_orders', async function(req, res) {
     }
 
     console.log(new_items)
-    // console.log(difference.length)
+    console.log(difference.length)
     // console.log(new_items.length)
 
     if(new_items.length > 0) await createImport(new_items)
