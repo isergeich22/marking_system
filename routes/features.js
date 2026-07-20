@@ -345,7 +345,7 @@ router.get('/personal_orders', async function(req, res) {
 
             names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Наматрас')  < 0 && o.name.indexOf('Ветошь') < 0)
 
-            console.log(names)
+            // console.log(names)
 
         } catch(err) {
 
@@ -391,6 +391,9 @@ router.get('/personal_orders', async function(req, res) {
             let cellNumber = 5
     
             for(let i = 0; i < array.length; i++) {
+
+                console.log(array[i])
+                console.log(names.find(o => o.name === 'КПБ Постельное бельё бязь 1,5 спальное - 142 - Белый'))
     
                 ws.getCell(`B${cellNumber}`).value = 6302
                 names.find(o => o.name === array[i]).productType === 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ' ? ws.getCell(`C${cellNumber}`).value = 'Да' : ws.getCell(`C${cellNumber}`).value = 'Нет'
@@ -554,7 +557,7 @@ router.get('/personal_orders', async function(req, res) {
         let Quantity = createQuantityList()
         let content = ``
 
-        console.log(List)
+        // console.log(List)
 
         for(let i = 0; i < List.length; i++) {
             if(List[i].length > 0) {
@@ -622,8 +625,8 @@ router.get('/personal_orders', async function(req, res) {
 
     }
 
-    console.log(new_items)
-    console.log(difference.length)
+    // console.log(new_items)
+    // console.log(difference.length)
     // console.log(new_items.length)
 
     if(new_items.length > 0) await createImport(new_items)
