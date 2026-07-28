@@ -888,7 +888,7 @@ router.get('/ozon/:from', async function(req, res){
 
         }
 
-        if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
+        if((response.data.result[0].name.indexOf('Простыня') >= 0 || response.data.result[0].name.indexOf('Пеленка') >= 0) && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
             if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
