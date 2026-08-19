@@ -729,61 +729,76 @@ router.get('/test_features', async function(req, res){
 
 })
 
-router.get('/clear_duplicate', async function(req, res){
-
+router.get('/clear_duplicate', async function (req, res) {
+ 
     const workbook = XLSX.readFile(path.join(__dirname, '../public/Краткий отчет.xlsx'));
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-
+ 
     // Найти строку-заголовок (где есть 'GTIN')
     const headerRowIndex = rows.findIndex(r => r.some(cell => cell === 'GTIN'));
     const headers = rows[headerRowIndex];
     const gtinIdx = headers.indexOf('GTIN');
     const nameIdx = headers.indexOf('Полное наименование товара');
-
+    const dateIdx = headers.indexOf('Дата создания');
+ 
+    // Парсим дату вида "ДД-ММ-ГГГГ" в число (timestamp) для сравнения.
+    // Строки без даты считаются самыми старыми -> -Infinity.
+    function parseDate(value) {
+        if (!value) return -Infinity;
+        const str = String(value).trim();
+        const m = str.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (!m) return -Infinity;
+        const [, dd, mm, yyyy] = m;
+        return new Date(Number(yyyy), Number(mm) - 1, Number(dd)).getTime();
+    }
+ 
     const data = rows.slice(headerRowIndex + 1)
         .filter(r => r[gtinIdx] && r[nameIdx])
         .map(r => ({
             gtin: Number(r[gtinIdx]),
-            name: String(r[nameIdx]).toLowerCase().trim()
-    }));
-
-    // Группируем по наименованию, берём запись с минимальным GTIN
-    const earliest = {};
+            name: String(r[nameIdx]).toLowerCase().trim(),
+            date: parseDate(r[dateIdx]),
+        }));
+ 
+    // Группируем записи по наименованию
+    const groups = {};
     for (const row of data) {
-        if (!earliest[row.name] || row.gtin < earliest[row.name]) {
-            earliest[row.name] = row.gtin;
+        if (!groups[row.name]) groups[row.name] = [];
+        groups[row.name].push(row);
+    }
+ 
+    // Только наименования с дублями (больше одной записи)
+    const duplicateGroups = Object.values(groups).filter(g => g.length > 1);
+ 
+    console.log(`Наименований с дублями: ${duplicateGroups.length}`);
+ 
+    // Для каждой группы дублей находим "самую новую" запись (по дате,
+    // при равенстве дат — по наибольшему GTIN) и исключаем её из результата.
+    const gtinList = [];
+    for (const group of duplicateGroups) {
+        const newest = group.reduce((best, cur) => {
+            if (cur.date > best.date) return cur;
+            if (cur.date === best.date && cur.gtin > best.gtin) return cur;
+            return best;
+        }, group[0]);
+ 
+        for (const row of group) {
+            if (row !== newest) {
+                gtinList.push(row.gtin);
+            }
         }
     }
-
-    console.log(`Уникальных наименований: ${Object.keys(earliest).length}`);
-
-    // Найти группы где наименование встречается больше 1 раза
-    const nameCount = {};
-    for (const row of data) {
-    nameCount[row.name] = (nameCount[row.name] || 0) + 1;
-    }
-
-    // Только наименования с дублями
-    const duplicateNames = new Set(
-    Object.entries(nameCount)
-        .filter(([name, count]) => count > 1)
-        .map(([name]) => name)
-    );
-
-    // Берём из earliest только те записи где есть дубль
-    const gtinList = Object.entries(earliest)
-    .filter(([name]) => duplicateNames.has(name))
-    .map(([, gtin]) => gtin)
-    .sort((a, b) => a - b);
-
+ 
+    gtinList.sort((a, b) => a - b);
+ 
     const result = gtinList.join(',<br>');
     const count = gtinList.length;
-
-    console.log(`GTIN с дублями: ${count}`); // должно быть ~211
-
+ 
+    console.log(`GTIN дублей (без самых новых): ${count}`);
+ 
     res.send(result);
-
+ 
 })
 
 module.exports = router
