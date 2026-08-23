@@ -538,7 +538,7 @@ router.get('/wildberries_marks_order', async function(req, res) {
 
         }
 
-        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('Наматрас') < 0 && o.name.indexOf('Плед') < 0)
+        names = names.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('Наматрас') < 0 && o.name.indexOf('Плед') < 0 && o.name.indexOf('Покрывало') < 0)
 
     }
 
@@ -774,7 +774,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    wbOrder = wbOrder.filter(o => o.orderProduct.indexOf('Матрас') < 0 && o.orderProduct.indexOf('Подушка') < 0 && o.orderProduct.indexOf('Одеяло') < 0 && o.orderProduct.indexOf('Ветошь') < 0 && o.orderProduct.indexOf('Наматра') < 0 && o.orderProduct.indexOf('Плед'))
+    wbOrder = wbOrder.filter(o => o.orderProduct.indexOf('Матрас') < 0 && o.orderProduct.indexOf('Подушка') < 0 && o.orderProduct.indexOf('Одеяло') < 0 && o.orderProduct.indexOf('Ветошь') < 0 && o.orderProduct.indexOf('Наматра') < 0 && o.orderProduct.indexOf('Плед') < 0 && o.orderProduct.indexOf('Покрывало') < 0)
 
     await wb.xlsx.readFile(marksTemplateFile)
 
@@ -909,7 +909,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    _temp = _temp.filter(o => o.name.indexOf('Матрас') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Ветошь') < 0)
+    _temp = _temp.filter(o => o.name.indexOf('Матрас') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('Плед') < 0 && o.name.indexOf('Покрывало') < 0)
 
     console.log(_temp)
 
@@ -947,6 +947,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     for(let i = 0; i < wbOrder.length; i++) {        
 
+        console.log(wbOrder[i])
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
 
         if(gtin === undefined) {            
@@ -954,8 +955,6 @@ router.get('/wildberries/set_marks', async function (req, res){
             wbOrder[i].mark = ''
 
         } else {
-
-            console.log(gtin)
 
             const mark = marks.find(o => o.gtin === String(gtin) && o.status === 'not_used').mark
 
@@ -985,6 +984,8 @@ router.get('/wildberries/set_marks', async function (req, res){
     for(let i = 0; i < wbOrder.length; i++) {
 
         const order = marksOrderNumbers.find(o => o.value === wbOrder[i].orderNumber)
+        console.log(order)
+        console.log(order.address.length)
         if(order.address.length === 2) {
             ws_6.getCell(`C${order.address[1]}`).value = wbOrder[i].mark
         }
