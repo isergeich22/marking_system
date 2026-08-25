@@ -1326,7 +1326,7 @@ router.get('/ozon_marks_order/:from', async function(req, res){
         }
     })
 
-    oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('холстопрошивное') < 0)
+    oz_orders = oz_orders.filter(o => o.name.indexOf('Одеяло') < 0 && o.name.indexOf('Подушка') < 0 && o.name.indexOf('Матрас') < 0 && o.name.indexOf('Ветошь') < 0 && o.name.indexOf('холстопрошивное') < 0 && o.name.indexOf('Лоскут') < 0)
 
     function createNameList() {
 
