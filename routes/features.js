@@ -379,6 +379,8 @@ router.get('/personal_orders', async function(req, res) {
     }
 
     async function createImport(array) {
+
+            console.log(names)
     
             const fileName = './public/IMPORT_TNVED_6302.xlsx'
     
@@ -391,9 +393,6 @@ router.get('/personal_orders', async function(req, res) {
             let cellNumber = 5
     
             for(let i = 0; i < array.length; i++) {
-
-                console.log(array[i])
-                console.log(names.find(o => o.name === 'КПБ Постельное бельё бязь 1,5 спальное - 142 - Белый'))
     
                 ws.getCell(`B${cellNumber}`).value = 6302
                 names.find(o => o.name === array[i]).productType === 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ' ? ws.getCell(`C${cellNumber}`).value = 'Да' : ws.getCell(`C${cellNumber}`).value = 'Нет'
