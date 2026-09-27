@@ -983,6 +983,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     for(let i = 0; i < wbOrder.length; i++) {
 
+        console.log(wbOrder[i].orderNumber)
         const order = marksOrderNumbers.find(o => o.value === wbOrder[i].orderNumber)
         console.log(order)
         console.log(order.address.length)
