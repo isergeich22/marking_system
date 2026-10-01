@@ -4,6 +4,154 @@ const axios = require('axios')
 const fs = require('fs')
 const buttons = require('../config').buttons
 
+async function fetchPaginatedFbsPostings(since) {
+    const postings = []
+    since = String(since) + `:00:00.000Z`
+    to = `${new Date().getFullYear()}-12-31T23:59:59.999Z`
+    let cursor = ''
+    let hasNext = true
+    while(hasNext) {
+        const response = await axios.post('https://api-seller.ozon.ru/v4/posting/fbs/list', {
+            sort_dir: 'asc',
+            filter: { since, status: ['awaiting_packaging', 'awaiting_deliver'], to },
+            limit: 100,
+            cursor
+        }, { headers: getOzonHeaders() })
+
+        for(const posting of response.data.postings) {
+            postings.push(posting)
+        }
+        hasNext = response.data.has_next
+        cursor = response.data.cursor
+    }
+    return postings
+}
+
+function buildValidateBody(setBody) {
+    const { multi_box_qty, ...validateBody } = setBody
+    return validateBody
+}
+
+function getOzonHeaders() {
+    return {
+        'Client-Id': process.env.OZON_CLIENT_ID,
+        'Api-Key': process.env.OZON_API_KEY
+    }
+}
+
+async function getExemplars(postingNumber) {
+    const response = await axios.post(
+        'https://api-seller.ozon.ru/v6/fbs/posting/product/exemplar/create-or-get',
+        { posting_number: postingNumber },
+        { headers: getOzonHeaders() }
+    )
+    return response.data
+}
+
+async function setExemplars(body) {
+    const response = await axios.post(
+        'https://api-seller.ozon.ru/v6/fbs/posting/product/exemplar/set',
+        body,
+        { headers: getOzonHeaders() }
+    )
+    return response.data
+}
+
+function buildSetBody(data) {
+    return {
+        multi_box_qty: data.multi_box_qty,
+        posting_number: data.posting_number,
+        products: (data.products || []).map(product => ({
+            product_id: product.product_id,
+            exemplars: (product.exemplars || []).map(ex => ({
+                exemplar_id: ex.exemplar_id,
+                marks: (ex.marks && ex.marks.length ? ex.marks : [{}]).map(m => ({
+                    mark: '',
+                    mark_type: m.mark_type ?? 'mandatory_mark'
+                }))
+            }))
+        }))
+    }
+}
+
+function decodeUnicodeEscapes(s) {
+    return String(s).replace(/\\u([0-9a-fA-F]{4})/g, (match, hex) => {
+        if (hex.toLowerCase() === '001d') return match // \u001d оставляем текстом
+        return String.fromCharCode(parseInt(hex, 16))
+    })
+}
+
+function fillMarks(bodyObject, ordersProducts) {
+    // 1. Индекс кодов: "posting_number:sku" -> массив кодов
+    //    (если один товар встречается в нескольких строках, коды объединяются)
+    const marksByKey = new Map()
+    for (const op of ordersProducts) {
+        const key = `${op.posting_number}:${op.sku}`
+        if (!marksByKey.has(key)) marksByKey.set(key, [])
+        marksByKey.get(key).push(...(op.marks || []))
+    }
+ 
+    const problems = []
+ 
+    // 2. Идём по телам запросов и подставляем коды
+    for (const body of bodyObject) {
+        for (const product of body.products) {
+            // sku из xlsx == product_id в Ozon
+            const key = `${body.posting_number}:${product.product_id}`
+            const marks = marksByKey.get(key)
+ 
+            if (!marks) {
+                problems.push({ key, reason: 'нет кодов в ordersProducts' })
+                continue
+            }
+ 
+            if (marks.length !== product.exemplars.length) {
+                problems.push({
+                    key,
+                    reason: `кодов ${marks.length}, экземпляров ${product.exemplars.length}`
+                })
+            }
+ 
+            // i-й код -> i-й экземпляр
+            product.exemplars.forEach((ex, i) => {
+                if (marks[i] === undefined) return
+                const target = ex.marks.find(m => m.mark_type === 'mandatory_mark') ?? ex.marks[0]
+                target.mark = decodeUnicodeEscapes(marks[i]).replace(/\\u001d/g, '\u001d')
+            })
+        }
+    }
+ 
+    return { bodyObject, problems }
+}
+
+async function validateExemplars(body, retries = 5) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const response = await axios.post(
+                'https://api-seller.ozon.ru/v5/fbs/posting/product/exemplar/validate',
+                body,
+                { headers: getOzonHeaders() }
+            )
+            return response.data
+        } catch (err) {
+            const status = err.response?.status
+            const retryable = status === 429 || (status >= 500 && status < 600)
+ 
+            if (!retryable || attempt === retries) {
+                // Возвращаем тело ошибки Ozon, чтобы видеть причину
+                const e = new Error(err.message)
+                e.ozon = err.response?.data
+                throw e
+            }
+ 
+            const retryAfter = Number(err.response?.headers?.['retry-after'])
+            const delay = retryAfter ? retryAfter * 1000 : 2000 * 2 ** attempt
+            console.warn(`HTTP ${status}, повтор через ${delay} мс`)
+            await sleep(delay)
+        }
+    }
+}
+
 router.get('/ozon', async function(req, res){
 
     const nat_cat = []
@@ -738,6 +886,139 @@ router.get('/ozon_marks_order', async function(req, res){
 
     const orders = oz_orders.map(o => ({ name: o.name, quantity: o.quantity }))
     res.render('marks-order', { title: 'Заказ маркировки - OZON', orders, buttons })
+
+})
+
+router.get('/ozon_set_marks/:since', async function(req, res){
+
+    const nat_cat = []
+    const marks = []
+
+    const wb = new exl.Workbook()
+
+    const natCatFile = './public/Краткий отчет.xlsx'
+    const ozonMarksFile = './public/ozon_marks.xlsx'
+
+    await wb.xlsx.readFile(natCatFile)
+
+    const nc_ws = wb.getWorksheet('Краткий отчет')
+
+    nc_ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+
+        if(rowNumber <= 4) return
+
+        nat_cat.push({
+            name: row.values[2],
+            gtin: `0${row.values[1]}`
+        })
+
+    })
+
+    let orders = await fetchPaginatedFbsPostings(req.params.since)
+
+    orders = orders.filter(item => item.status === 'awaiting_packaging')
+
+    await wb.xlsx.readFile(ozonMarksFile)
+
+    const om_ws = wb.getWorksheet(1)
+
+    om_ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+
+        marks.push(row.values[1])
+
+    })
+
+    const bodyObject = []
+
+    let ordersProducts = []
+
+    for(let item of orders) {
+
+        for(let el of item.products) {
+
+            ordersProducts.push({
+                posting_number: item.posting_number,
+                name: el.name.trim().toLowerCase().indexOf('постельн') >= 0 ? `КПБ ${el.name}` : el.name,
+                sku: el.sku,
+                gtin: "",
+                marks: []
+            })
+
+        }
+
+    }
+
+    for(let product of ordersProducts) {
+
+        if(nat_cat.find(item => item.name.trim().toLowerCase() === product.name.trim().toLowerCase())) {
+
+            product.gtin = nat_cat.find(item => item.name.trim().toLowerCase() === product.name.trim().toLowerCase()).gtin
+
+        }
+
+    }
+
+    for(let item of orders) {
+
+        const data = await getExemplars(item.posting_number)
+
+        bodyObject.push(buildSetBody(data))
+
+    }
+
+    for(let item of ordersProducts) {
+
+        item.marks = marks.filter(el => el.indexOf(item.gtin) >= 0)
+
+    }
+
+    ordersProducts = ordersProducts.filter(item => item.marks.length > 0)
+
+    for(let i = 0; i < ordersProducts.length; i++) {
+
+        let obj = bodyObject.find(item => item.posting_number === ordersProducts[i].posting_number)
+
+        console.log(obj)
+
+    }
+
+    const result = fillMarks(bodyObject, ordersProducts)
+
+    for(let i = 0; i < result.bodyObject.length; i++) {
+
+        try {
+
+            const _result = await setExemplars(result.bodyObject[i])
+
+            console.log(_result)
+
+        } catch(err) {
+
+            console.log(err)
+
+        }
+
+    }    
+
+    let _results = []
+
+    for(let i = 0; i < result.bodyObject.length; i++) {
+
+        const body = buildValidateBody(result.bodyObject[i])
+
+        try {
+            const data = await validateExemplars(body)
+            _results.push({ posting_number: body.posting_number, response: data })
+        } catch (err) {
+            _results.push({
+                posting_number: body.posting_number,
+                error: err.ozon || err.message
+            })
+        }
+
+    }
+
+    res.json({result: _results})
 
 })
 
