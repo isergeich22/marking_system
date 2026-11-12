@@ -57,7 +57,7 @@ router.get('/personal_orders', async function(req, res) {
 
         let name = orderProducts[i].name
 
-        name.toLowerCase().indexOf('постельно') >= 0 ? name = `КПБ ${name}` : name = name
+        name.toLowerCase().indexOf('постельн') >= 0 ? name = `КПБ ${name}` : name = name
 
         // console.log(name)
 
@@ -97,9 +97,11 @@ router.get('/personal_orders', async function(req, res) {
 
     let names = []
 
-    for(let i = 0; i < difference.length; i++) {
+    for(let i = 0; i < difference.length; i++) {        
 
         try {
+
+            console.log(difference[i].vendor)
 
             const response = await axios.post('https://api-seller.ozon.ru/v4/product/info/attributes', {
 
@@ -131,14 +133,14 @@ router.get('/personal_orders', async function(req, res) {
                     'size': response.data.result[0].attributes.find(o => o.id === 6773).values[0].value,
                     'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                     'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                    'productType': 'ПОДОДЕЯЛЬНИК С КЛАПАНОМ'
+                    'productType': 'ПОДОДЕЯЛЬНИК'
                 })
 
             }
 
             if(response.data.result[0].name.indexOf('Простыня') >= 0 && response.data.result[0].name.indexOf('белье') < 0 && response.data.result[0].name.indexOf('бельё') < 0) {
 
-                if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+                if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
                     names.push({
                         'vendor': difference[i].vendor,
@@ -148,12 +150,12 @@ router.get('/personal_orders', async function(req, res) {
                         'size': `${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x${response.data.result[0].attributes.find(o => o.id === 8414).values[0].value}`,
                         'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                         'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
-                        'productType': 'ПРОСТЫНЯ НА РЕЗИНКЕ'
+                        'productType': 'ПРОСТЫНЯ'
                     })
 
                 }
 
-                if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                if(response.data.result[0].name.indexOf('резинка') < 0) {
 
                     names.push({
                         'vendor': difference[i].vendor,
@@ -206,7 +208,7 @@ router.get('/personal_orders', async function(req, res) {
 
                 if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 2) {
 
-                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+                    if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
                         if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
@@ -255,7 +257,7 @@ router.get('/personal_orders', async function(req, res) {
 
                     }
 
-                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                    if(response.data.result[0].name.indexOf('резинка') < 0) {
 
                         names.push({
                             'vendor': difference[i].vendor,
@@ -274,7 +276,7 @@ router.get('/personal_orders', async function(req, res) {
 
                 if(response.data.result[0].attributes.find(o => o.id === 6772).values.length === 1) {
 
-                    if(response.data.result[0].name.indexOf('на резинке') >= 0) {
+                    if(response.data.result[0].name.indexOf('резинка') >= 0) {
 
                         if(response.data.result[0].name.indexOf('х20 -') >= 0 ||response.data.result[0].name.indexOf('х 20 -') >= 0) {
 
@@ -284,6 +286,21 @@ router.get('/personal_orders', async function(req, res) {
                                                                 .trim()                  // убрать пробелы по краям
                                                                 .replace(/\s+/g, ' ')}`,
                                 'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x20; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
+                        if(response.data.result[0].name.indexOf('х25 -') >= 0 ||response.data.result[0].name.indexOf('х 25 -') >= 0) {
+
+                            names.push({
+                                'vendor': difference[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x25; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
                                 'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
                                 'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
                                 'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
@@ -306,6 +323,21 @@ router.get('/personal_orders', async function(req, res) {
 
                         }
 
+                        if(response.data.result[0].name.indexOf('х35 -') >= 0 ||response.data.result[0].name.indexOf('х 35 -') >= 0) {
+
+                            names.push({
+                                'vendor': difference[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x35; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
                         if(response.data.result[0].name.indexOf('х40 -') >= 0 ||response.data.result[0].name.indexOf('х 40 -') >= 0) {
 
                             names.push({
@@ -321,9 +353,24 @@ router.get('/personal_orders', async function(req, res) {
 
                         }
 
+                        if(response.data.result[0].name.indexOf('х45 -') >= 0 ||response.data.result[0].name.indexOf('х 45 -') >= 0) {
+
+                            names.push({
+                                'vendor': difference[i].vendor,
+                                'name': `КПБ ${response.data.result[0].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
+                                                                .trim()                  // убрать пробелы по краям
+                                                                .replace(/\s+/g, ' ')}`,
+                                'size': `Пододеяльник: ${response.data.result[0].attributes.find(o => o.id === 6773).values[0].value}; Простыня: ${response.data.result[0].attributes.find(o => o.id === 6771).values[0].value}x45; Наволочка: ${response.data.result[0].attributes.find(o => o.id === 6772).values[0].value}`,
+                                'color': response.data.result[0].attributes.find(o => o.id === 10096).values[0].value.toUpperCase(),
+                                'cloth': response.data.result[0].attributes.find(o => o.id === 6769).values[0].value.toUpperCase(),
+                                'productType': 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ'
+                            })
+
+                        }
+
                     }
 
-                    if(response.data.result[0].name.indexOf('на резинке') < 0) {
+                    if(response.data.result[0].name.indexOf('резинка') < 0) {
 
                         names.push({
                             'vendor': difference[i].vendor,
@@ -349,6 +396,8 @@ router.get('/personal_orders', async function(req, res) {
 
         } catch(err) {
 
+            console.log(err)
+
             names.push({
                     'vendor': difference[i].vendor,
                     'name': difference[i].name.replace(/\u00A0/g, ' ') // заменить неразрывные пробелы на обычные
@@ -370,9 +419,9 @@ router.get('/personal_orders', async function(req, res) {
 
         difference.forEach(el => {
 
-            if(el.name.indexOf('Постельн') >= 0) new_items.push(`КПБ ${el.name}`)
+            if(el.name.toLowerCase().indexOf('постельн') >= 0) new_items.push(`КПБ ${el.name}`)
 
-            if(el.name.indexOf('Постельн') < 0) new_items.push(el.name)
+            if(el.name.toLowerCase().indexOf('постельн') < 0) new_items.push(el.name)
 
         })
 
@@ -380,7 +429,7 @@ router.get('/personal_orders', async function(req, res) {
 
     async function createImport(array) {
 
-            console.log(names)
+            // console.log(names)
     
             const fileName = './public/IMPORT_TNVED_6302.xlsx'
     
@@ -393,6 +442,10 @@ router.get('/personal_orders', async function(req, res) {
             let cellNumber = 5
     
             for(let i = 0; i < array.length; i++) {
+
+                console.log(array[i])
+
+                console.log(names.find(o => o.name === 'Постельное бельё страйп-сатин Евро резинка 160х200х25 - 125 - "Сапфир" 1х1 наволочки 50х70'))
     
                 ws.getCell(`B${cellNumber}`).value = 6302
                 names.find(o => o.name === array[i]).productType === 'КОМПЛЕКТ ПОСТЕЛЬНОГО БЕЛЬЯ' ? ws.getCell(`C${cellNumber}`).value = 'Да' : ws.getCell(`C${cellNumber}`).value = 'Нет'
@@ -479,6 +532,8 @@ router.get('/personal_orders', async function(req, res) {
     
     }
 
+    res.json(orderProducts)
+
     function createNameList() {
 
         let orderList = []
@@ -520,7 +575,7 @@ router.get('/personal_orders', async function(req, res) {
 
         for(let i = 0; i < orderProducts.length; i++) {
 
-            if(orderProducts[i].name.indexOf('Постельн') >= 0) {
+            if(orderProducts[i].name.toLowerCase().indexOf('постельн') >= 0) {
 
                 if(nat_cat.indexOf(`КПБ ${orderProducts[i].name}`) >= 0) {
                     temp.push(orderProducts.find(o => o.vendor === orderProducts[i].vendor).quantity)
@@ -626,21 +681,22 @@ router.get('/personal_orders', async function(req, res) {
 
     // console.log(new_items)
     // console.log(difference.length)
-    // console.log(new_items.length)
+    console.log(new_items.length)
 
     if(new_items.length > 0) await createImport(new_items)
 
-    if(difference.length <= 0) createOrder()
+    // if(difference.length <= 0) createOrder()
 
-    const List = createNameList()
-    const Quantity = createQuantityList()
-    const orders = []
-    for(let i = 0; i < List.length; i++) {
-        for(let j = 0; j < List[i].length; j++) {
-            orders.push({ name: List[i][j], quantity: Quantity[i][j], isNew: nat_cat.indexOf(List[i][j]) < 0 })
-        }
-    }
-    res.render('marks-order', { title: 'Персональный заказ', orders, buttons })
+    // const List = createNameList()
+    // const Quantity = createQuantityList()
+    // console.log(Quantity)
+    // const orders = []
+    // for(let i = 0; i < List.length; i++) {
+    //     for(let j = 0; j < List[i].length; j++) {
+    //         orders.push({ name: List[i][j], quantity: Quantity[i][j], isNew: nat_cat.indexOf(List[i][j]) < 0 })
+    //     }
+    // }
+    // res.render('marks-order', { title: 'Персональный заказ', orders, buttons })
 
 })
 
