@@ -945,10 +945,11 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     }
 
-    for(let i = 0; i < wbOrder.length; i++) {        
+    for(let i = 0; i < wbOrder.length; i++) {
 
-        console.log(wbOrder[i])
         const gtin = _temp.find(o => o.name === wbOrder[i].orderProduct).gtin
+
+        console.log(gtin)
 
         if(gtin === undefined) {            
             
@@ -983,10 +984,7 @@ router.get('/wildberries/set_marks', async function (req, res){
 
     for(let i = 0; i < wbOrder.length; i++) {
 
-        console.log(wbOrder[i].orderNumber)
         const order = marksOrderNumbers.find(o => o.value === wbOrder[i].orderNumber)
-        console.log(order)
-        console.log(order.address.length)
         if(order.address.length === 2) {
             ws_6.getCell(`C${order.address[1]}`).value = wbOrder[i].mark
         }
